@@ -1,0 +1,45 @@
+import os
+
+def ehr_chunkifier(ehr:dict) -> list:
+    chunks = []
+    chunks.append(
+            {
+             "type":"demographics",   
+             "Content": ehr.get("demographics",[]),  
+            })
+    
+    medical_history = ehr.get("medical_history",[])
+    for med in medical_history:
+        chunks.append(
+            {
+                "type": med,
+                "content": medical_history[med],
+                "source": "medical_history"
+            }
+        )
+
+    recent_visits = ehr.get("recent_visits", [])
+    for visit in recent_visits:
+        chunks.append(
+            {
+                "type":"recent_visit",
+                "content" : f"Reason: {visit["reason"]} {os.linesep} Notes: {visit["notes"]}",
+                "date": visit["date"],
+                "doctor": visit["doctor"]
+            }
+        )
+
+
+    lab_results = ehr.get("lab_results")
+
+    for lab in lab_results:
+        chunks.append(
+            {
+                "type":"lab_result",
+                "content" : {"test": lab["test"] , "results": lab["results"] },
+                "date": visit["date"],
+            }
+        )
+
+    return chunks
+    
