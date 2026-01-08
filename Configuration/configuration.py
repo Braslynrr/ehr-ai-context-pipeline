@@ -3,16 +3,21 @@ from dotenv import load_dotenv
 import dspy
 
 class Config:
-    __apiKey = None
-    llm = None
+    llm:dspy.LM = None
+    __ehr_location:str
 
-    def __init__(self, provider="ollama", model = "qwen3:4b", max_tokens = 4000, streaming = False):
+    def __init__(self, max_tokens = 4000, streaming = False):
+        _ehr_location = "./data/"
+        provider = "ollama"
+        model = "qwen3:4b"
         load_dotenv()
-        self.__apiKey = os.getenv("API_KEY")
 
-        if not self.__apiKey:
-            raise ValueError("API_KEY environment variable is required")
-        
+        _ehr_location = os.getenv("MEDICAL_EHR_LOCATION")
+        provider = os.getenv("MEDICAL_LLM_PROVIDER")
+        model = os.getenv("MEDICAL_LLM_MODEL")
+
+
+        self.__ehr_location = _ehr_location
         
         self.llm = dspy.LM(
             model= f"{provider}/{model}",
@@ -23,3 +28,6 @@ class Config:
         )
 
         dspy.configure(lm=self.llm, async_max_workers=1, adapter=dspy.JSONAdapter())
+    
+    def get_ehr_location(self) -> str:
+        return self.__ehr_location

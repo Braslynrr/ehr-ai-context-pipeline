@@ -30,7 +30,7 @@ KEYS = ["content", "date", "source" , "type"]
 def get_chunk_type(chunk: dict) -> str | None:
     return chunk.get("type") or chunk.get("section")
 
-def build_embedding_text(chunk: dict) -> str:
+def build_enriched_text(chunk: dict) -> str:
     chunk_type = get_chunk_type(chunk)
     hint = SEMANTIC_HINTS.get(chunk_type, {})
 
@@ -49,8 +49,8 @@ def build_embedding_text(chunk: dict) -> str:
 {relevantcontent}
 """.strip()
 
-def build_embedding_text_from_list(chunks:list[dict]) -> list[str]:
+def enrich_text_from_list(chunks:list[dict]) -> list[str]:
     result = []
     for chunk in chunks:
-        result.append(build_embedding_text(chunk))
+        result.append(build_enriched_text(chunk))
     return result

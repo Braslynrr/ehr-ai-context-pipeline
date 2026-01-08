@@ -1,9 +1,6 @@
 import os
-from .vector_entry import VectorEntry
-from .embedding import embed
-from .context_builder import context_builder
 
-def ehr_chunkifier(ehr:dict) -> list:
+def ehr_json_chunkifier(ehr:dict) -> list:
     chunks = []
     chunks.append(
             {
@@ -50,17 +47,3 @@ def ehr_chunkifier(ehr:dict) -> list:
     return chunks
     
 
-def embed_chunks(chunks:list[dict], toembed:list[str]):
-
-
-    embedded_chunks = []
-    for i in range(len(chunks)):
-
-        embed_chunk = VectorEntry(
-            embed(toembed[i].lower()),
-            chunks[i]
-        )
-
-        embedded_chunks.append(embed_chunk)
-
-    return embedded_chunks
