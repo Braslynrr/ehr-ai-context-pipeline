@@ -6,7 +6,7 @@ class Config:
     __apiKey = None
     llm = None
 
-    def __init__(self, model = "qwen3:4b", max_tokens = 4000, streaming = False):
+    def __init__(self, provider="ollama", model = "qwen3:4b", max_tokens = 4000, streaming = False):
         load_dotenv()
         self.__apiKey = os.getenv("API_KEY")
 
@@ -15,7 +15,7 @@ class Config:
         
         
         self.llm = dspy.LM(
-            model= f"ollama/{model}",
+            model= f"{provider}/{model}",
             max_tokens=max_tokens,
             num_retries=15,
             temperature=0.2

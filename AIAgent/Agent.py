@@ -20,9 +20,10 @@ class EHRAgent:
         ##)
         ##result = predictor(context=context, question=question)
         result = self.__llm(f"""Actua como un asistente de medico general. Limita la respuesta al contexto y asegurate de mencionar la referencia; Cualquier otra pregunta o comentario fuera del ambito medico o fuera del contexto, debe de ser rechazada cordialmente.
-                       Question: {question}
-                        context: {context}
+                            Refactoriza la referencia para que sea lejible por el usuario.
+                            Question: {question}
+                            context: {context}
                    """)
         
         
-        return result[0]
+        return "".join(result)
