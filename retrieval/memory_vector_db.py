@@ -1,7 +1,7 @@
 import numpy as np
 from .vector_entry import VectorEntry
 
-def cosine_similarity(a, b):
+def _cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 class InMemoryVectorStore:
@@ -19,7 +19,7 @@ class InMemoryVectorStore:
 
     def search(self, query_embedding, k=2):
         scored = [
-            (cosine_similarity(query_embedding, e.embedding), e)
+            (_cosine_similarity(query_embedding, e.embedding), e)
             for e in self.entries
         ]
         scored.sort(key=lambda x: x[0], reverse=True)

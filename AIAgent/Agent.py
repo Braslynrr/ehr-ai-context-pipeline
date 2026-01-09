@@ -1,24 +1,17 @@
 import dspy
 
 class EHRAgent:
+    """
+    Handles clinicians questions through use of context and llm response 
+    """
 
     __llm = None
-
-    class MedicalSignature(dspy.Signature):
-        context = dspy.InputField()
-        question = dspy.InputField()
-        answer = dspy.OutputField(desc="With a comertial llm this signature could be used.")
-
 
     def __init__(self, llm):
         self.__llm = llm
 
     def Predict(self, question: str, context: str) -> str:
-        ##predictor = dspy.Predict(
-        ##    self.MedicalSignature,
-        ##    lm=self.__llm
-        ##)
-        ##result = predictor(context=context, question=question)
+
         result = self.__llm(f"""
                             Act as a doctor assistant. 
                             Each answer should have the context from which was taken, if the question is out of context the references can be omitted; So,

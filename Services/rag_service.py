@@ -2,7 +2,13 @@ from ingestion import load_ehr
 from retrieval import InMemoryVectorStore, Embedder, enrich_text_from_list
 from chunkers import ehr_json_chunkifier
 
+# This service intentionally separates retrieval from generation
+# to keep the system modular and testable.
 class RagService:
+    """
+        Handles EHR ingestion, embedding, and retrieval using an in-memory vector store.
+    """
+    # Using in-memory vector store for simplicity and transparency.
     __vectodb:InMemoryVectorStore
     __embedder: Embedder
 
@@ -11,6 +17,9 @@ class RagService:
         self.__embedder= Embedder()
         
     def ingestion(self, filepath:str):
+        """
+        Loads EHR files, chunks the data, generates embeddings, and stores them in memory.
+        """
         # cleaning db
         self.__vectodb.clean()
         # loading ehr

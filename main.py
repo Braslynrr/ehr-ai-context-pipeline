@@ -1,14 +1,33 @@
+import sys
+import traceback
+
 from Services import RagService, MedicalService
 from AIAgent import EHRAgent
 from Configuration import Config
 from API import create_app
 
 
-config:Config = Config()
-rag = RagService()
+def main():
+    try:
+        config: Config = Config()
 
-agent = EHRAgent(config.llm)
-medical_service = MedicalService(rag, agent)
+        rag = RagService()
+        agent = EHRAgent(config.llm)
 
-app = create_app(medical_service, config)
-app.run(debug=True)
+        medical_service = MedicalService(rag, agent)
+
+        app = create_app(medical_service, config)
+        app.run(debug=True)
+
+    except RuntimeError as e:
+        print(f"[STARTUP ERROR] {e}")
+        sys.exit(1)
+
+    except Exception:
+        print("[FATAL ERROR] Application failed to start")
+        traceback.print_exc()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

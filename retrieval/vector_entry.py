@@ -4,4 +4,4 @@ from typing import Dict, Any, List
 @dataclass
 class VectorEntry:
     embedding: List[float]
-    payload: Dict[str, Any]   # your original chunk
+    payload: Dict[str, Any]   # original chunk

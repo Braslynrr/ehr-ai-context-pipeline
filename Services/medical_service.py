@@ -2,6 +2,10 @@ from AIAgent import EHRAgent
 from .rag_service import RagService
 
 class MedicalService:
+    '''
+    Handles the entire process of ingestion, retrieving and dynamically responses
+    '''
+
     rag:RagService
     agent: EHRAgent
 
