@@ -1,0 +1,40 @@
+{
+  "patient_id": "P003",
+  "demographics": {
+    "name": "Carlos Méndez",
+    "age": 29,
+    "gender": "M",
+    "blood_type": "B+"
+  },
+  "medical_history": {
+    "chronic_conditions": ["Hipotiroidismo"],
+    "allergies": [],
+    "current_medications": [
+      {"name": "Levotiroxina", "dose": "75mcg", "frequency": "1x/día"}
+    ]
+  },
+  "recent_visits": [
+    {
+      "date": "2024-10-28",
+      "reason": "Seguimiento endocrinológico",
+      "notes": "TSH en rango normal. Paciente asintomático.",
+      "doctor": "Dra. Fernández"
+    },
+    {
+      "date": "2024-07-12",
+      "reason": "Fatiga persistente",
+      "notes": "Se diagnostica hipotiroidismo. Se inicia levotiroxina.",
+      "doctor": "Dr. Salas"
+    }
+  ],
+  "lab_results": [
+    {
+      "date": "2024-10-25",
+      "test": "Perfil tiroideo",
+      "results": {
+        "tsh": "2.1 µIU/mL",
+        "t4_free": "1.2 ng/dL"
+      }
+    }
+  ]
+}

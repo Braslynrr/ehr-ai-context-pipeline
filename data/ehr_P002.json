@@ -1,0 +1,42 @@
+{
+  "patient_id": "P002",
+  "demographics": {
+    "name": "María González",
+    "age": 62,
+    "gender": "F",
+    "blood_type": "A-"
+  },
+  "medical_history": {
+    "chronic_conditions": ["Asma", "Dislipidemia"],
+    "allergies": ["AINEs"],
+    "current_medications": [
+      {"name": "Atorvastatina", "dose": "20mg", "frequency": "1x/día"},
+      {"name": "Salbutamol", "dose": "100mcg", "frequency": "PRN"}
+    ]
+  },
+  "recent_visits": [
+    {
+      "date": "2024-11-02",
+      "reason": "Control respiratorio",
+      "notes": "Asma controlada. No crisis recientes. Saturación O2 98%.",
+      "doctor": "Dr. Ramírez"
+    },
+    {
+      "date": "2024-09-05",
+      "reason": "Chequeo general",
+      "notes": "Colesterol LDL elevado. Se inicia tratamiento con estatinas.",
+      "doctor": "Dra. López"
+    }
+  ],
+  "lab_results": [
+    {
+      "date": "2024-09-01",
+      "test": "Perfil lipídico",
+      "results": {
+        "ldl": "165 mg/dL",
+        "hdl": "48 mg/dL",
+        "triglycerides": "190 mg/dL"
+      }
+    }
+  ]
+}

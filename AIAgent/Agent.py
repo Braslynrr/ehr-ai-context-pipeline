@@ -7,7 +7,7 @@ class EHRAgent:
     class MedicalSignature(dspy.Signature):
         context = dspy.InputField()
         question = dspy.InputField()
-        answer = dspy.OutputField(desc="Actua como un asistente de medico general. Limita la respuesta al contexto y asegurate de mencionar la referencia; Cualquier otra pregunta o comentario fuera del ambito medico o fuera del contexto, debe de ser rechazada cordialmente.")
+        answer = dspy.OutputField(desc="With a comertial llm this signature could be used.")
 
 
     def __init__(self, llm):
@@ -19,8 +19,15 @@ class EHRAgent:
         ##    lm=self.__llm
         ##)
         ##result = predictor(context=context, question=question)
-        result = self.__llm(f"""Actua como un asistente de medico general. Limita la respuesta al contexto y asegurate de mencionar la referencia; Cualquier otra pregunta o comentario fuera del ambito medico o fuera del contexto, debe de ser rechazada cordialmente.
-                            Refactoriza la referencia para que sea lejible por el usuario.
+        result = self.__llm(f"""
+                            Act as a doctor assistant. 
+                            Each answer should have the context from which was taken, if the question is out of context the references can be omitted; So,
+                            *Any question out the context should be decline due to it's not in the EHR*.
+                            Ensure you are mention the source/reference and refactor it to be read by the user,
+                            however don't show the content of the EHR like a json or any similar structure.
+                            
+                            [Ensure to identify the question language to answer correctly.]
+
                             Question: {question}
                             context: {context}
                    """)

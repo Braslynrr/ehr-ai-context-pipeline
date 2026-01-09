@@ -17,7 +17,7 @@ class InMemoryVectorStore:
     def clean(self):
         self.entries = []
 
-    def search(self, query_embedding, k=3):
+    def search(self, query_embedding, k=2):
         scored = [
             (cosine_similarity(query_embedding, e.embedding), e)
             for e in self.entries

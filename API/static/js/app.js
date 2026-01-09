@@ -1,23 +1,32 @@
 document.getElementById("sendBtn").addEventListener("click", async () => {
-    const question = document.getElementById("questionInput").value;
+    const questionInput = document.getElementById("questionInput");
+    const question = questionInput.value;
     const patient = document.getElementById("patientSelect").value;
     const responseBox = document.getElementById("responseBox");
+    const information = document.getElementById("notifyparagraph"); 
+    const button = document.getElementById("sendBtn");
 
     if (!question || !patient) {
         alert("Please select a patient and write a question.");
         return;
     }
 
+    responseBox.innerHTML += `
+            <p><strong>Question:</strong> ${question}</p>
+            <hr />`
+             
+    button.disabled = true;
+    questionInput.value = ""
+    information.innerText = "Loading your answer..."
     let asnwer = await askQuestion(patient,question)
 
-    // Placeholder para tu API Flask
-    setTimeout(() => {
-        responseBox.innerHTML += `
-            <p><strong>Question:</strong> ${question}</p>
-            <hr />
+    information.innerText = ""
+    responseBox.innerHTML += `
             <p><strong>Answer:</strong> ${asnwer}.</p>
-        `;
-    }, 200);
+            <br>`;
+
+    button.disabled = false;
+    
 });
 
 
