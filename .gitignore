@@ -1,4 +1,4 @@
 .env
 .pytest_cache/
-Medical-AI-venv/
+*venv/
 __pycache__/
