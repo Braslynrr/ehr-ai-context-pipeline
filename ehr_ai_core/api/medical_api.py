@@ -1,5 +1,5 @@
-from services import MedicalService
-from configuration import Config
+from ehr_ai_core.services import MedicalService
+from ehr_ai_core.configuration import Config
 from flask import Flask, jsonify, request, render_template
 from os import walk, path
 

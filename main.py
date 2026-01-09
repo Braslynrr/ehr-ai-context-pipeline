@@ -1,10 +1,10 @@
 import sys
 import traceback
 from dotenv import load_dotenv
-from services import RagService, MedicalService
-from aiagent import EHRAgent
-from configuration import Config
-from api import create_app
+from ehr_ai_core.services import RagService, MedicalService
+from ehr_ai_core.aiagent import EHRAgent
+from ehr_ai_core.configuration import Config
+from ehr_ai_core.api import create_app
 
 
 def main():

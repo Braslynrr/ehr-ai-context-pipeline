@@ -1,5 +1,5 @@
 import pytest
-from configuration import Config
+from ehr_ai_core.configuration import Config
 
 def test_missing_env_raises_location(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("MEDICAL_EHR_LOCATION", raising=False)

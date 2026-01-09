@@ -1,6 +1,6 @@
-from ingestion import load_ehr
-from retrieval import InMemoryVectorStore, Embedder, enrich_text_from_list
-from chunkers import ehr_json_chunkifier
+from ehr_ai_core.ingestion import load_ehr
+from ehr_ai_core.retrieval import InMemoryVectorStore, Embedder, enrich_text_from_list
+from ehr_ai_core.chunkers import ehr_json_chunkifier
 
 # This service intentionally separates retrieval from generation
 # to keep the system modular and testable.

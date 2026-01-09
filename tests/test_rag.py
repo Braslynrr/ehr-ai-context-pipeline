@@ -1,6 +1,5 @@
 import json
-from services import RagService
-from .test_chunker import EHR_DATA_NORMALIZED
+from ehr_ai_core.services import RagService
 
 def test_rag_search(mocker):
     
@@ -14,13 +13,13 @@ def test_rag_search(mocker):
 
     assert result is not None
 
-def test_rag_ingestion(tmp_path):
+def test_rag_ingestion(tmp_path, ehr_data_normalized):
 
     rag = RagService()
 
     file_path = tmp_path / "ehr.json"
-    file_path.write_text(json.dumps(EHR_DATA_NORMALIZED), encoding="utf-8")
+    file_path.write_text(json.dumps(ehr_data_normalized), encoding="utf-8")
 
     rag.ingestion(str(file_path))
 
-    assert len(rag.__vectodb.entries) > 0
+    assert len(rag._RagService__vectodb.entries) > 0

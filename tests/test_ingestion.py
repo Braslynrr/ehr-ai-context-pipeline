@@ -1,7 +1,7 @@
 import json
 import pytest
 import copy
-from ingestion import load_ehr
+from ehr_ai_core.ingestion import load_ehr
 
 EHR_DATA = {
         "patient_id": "P001",
