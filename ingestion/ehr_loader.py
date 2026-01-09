@@ -16,15 +16,37 @@ def _validate_structure(ehr:dict):
         if section not in ehr:
             missing_sections.append(section)
     if len(missing_sections) > 0:
-        raise ValueError(f"The ehr needs the following sections to be acceptable :[{str.join(missing_sections)}]")
+        raise ValueError(f"The ehr needs the following sections to be acceptable :[{"".join(missing_sections)}]")
     
 
 def _normalize_ehr(ehr:dict):
-    for visit in ehr.get("recent_visits", []):
+    
+    ehr["recent_visits"] = ehr.get("recent_visits", [])
+    for visit in ehr["recent_visits"]:
+        visit.setdefault("reason", "Unknown")
+        visit.setdefault("notes", "")
+        visit.setdefault("doctor", "Unknown")
         visit["date"] = _normalize_date(visit["date"])
 
-    for lab in ehr.get("lab_results", []):
+    ehr["lab_results"] = ehr.get("lab_results", [])
+    for lab in ehr["lab_results"]:
+        lab.setdefault("test", "Unknown test")
+        lab.setdefault("results", {})
         lab["date"] = _normalize_date(lab["date"])
 
+
+_SUPPORTED_DATE_FORMATS = (
+    "%d-%m-%Y",  # 10-12-2024
+    "%Y-%m-%d",  # 2024-12-10
+    "%m-%d-%Y",  # 12-10-2024
+    "%d-%Y-%m"   # 10-2024-12
+)
+
 def _normalize_date(date_str: str) -> str:
-    return datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
+    for fmt in _SUPPORTED_DATE_FORMATS:
+        try:
+            return datetime.strptime(date_str, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+
+    raise ValueError(f"Unsupported date format: {date_str}")

@@ -1,5 +1,5 @@
-from Services import MedicalService
-from Configuration import Config
+from services import MedicalService
+from configuration import Config
 from flask import Flask, jsonify, request, render_template
 from os import walk, path
 

@@ -1,4 +1,4 @@
-from AIAgent import EHRAgent
+from aiagent import EHRAgent
 from .rag_service import RagService
 
 class MedicalService:

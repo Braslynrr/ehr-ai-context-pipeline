@@ -1,14 +1,15 @@
 import sys
 import traceback
-
-from Services import RagService, MedicalService
-from AIAgent import EHRAgent
-from Configuration import Config
-from API import create_app
+from dotenv import load_dotenv
+from services import RagService, MedicalService
+from aiagent import EHRAgent
+from configuration import Config
+from api import create_app
 
 
 def main():
     try:
+        load_dotenv()
         config: Config = Config()
 
         rag = RagService()

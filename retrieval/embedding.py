@@ -13,7 +13,7 @@ class Embedder:
             prompt=text
         )["embedding"]
 
-    def embed_chunks(self, chunks:list[dict], toembed:list[str]):
+    def embed_chunks(self, chunks:list[dict], toembed:list[str]) -> list[VectorEntry]:
 
 
         embedded_chunks = []

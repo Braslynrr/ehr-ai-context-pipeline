@@ -39,8 +39,8 @@ def ehr_json_chunkifier(ehr:dict) -> list:
             {
                 "type":"lab_result",
                 "content" : {"test": lab["test"] , "results": lab["results"] },
-                "date": visit["date"],
-                "source": f"Laboratory result on {visit["date"]}"
+                "date": lab["date"],
+                "source": f"Laboratory result on {lab["date"]}"
             }
         )
 
