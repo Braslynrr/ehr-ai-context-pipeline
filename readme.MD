@@ -4,6 +4,9 @@
 This project implements a context engineering pipeline that enables an AI agent to assist clinicians during medical consultations.
 The system ingests Electronic Health Records (EHR), structures the information into contextual chunks, retrieves relevant data based on a clinician’s query, and generates grounded, traceable answers using a Large Language Model (LLM).
 
+This system is intentionally designed as a single-user, on-demand assistant. It does not aim to support concurrent users or large-scale request handling.
+EHR ingestion is triggered by user interaction and replaces the in-memory context when a different patient is selected.
+
 The focus of this implementation is clarity, traceability, and end-to-end functionality, rather than production-level optimization.
 
 ## System Goals
@@ -68,28 +71,33 @@ The ingestion pipeline loads raw EHR data in JSON format without modifying its o
 
 Responsibilities:
 
-Load EHR files
+* Load EHR files
 
-Validate basic structure
+* Validate basic structure
 
-Pass raw data to the chunking stage
+* Pass raw data to the chunking stage
 
 Design decision:
 
-The original EHR structure is preserved to reflect real-world constraints where data normalization is often infeasible.
+* The original EHR structure is preserved to reflect real-world constraints where data normalization is often infeasible.
 
-Ingestion performs minimal validation only. Any missing or optional fields are handled downstream to avoid early failures
+* Ingestion performs minimal validation only. Any missing or optional fields are handled downstream to avoid early failures
 and to reflect real-world incomplete medical records.
+
+* Ingestion is performed on demand based on user selection. When a clinician selects a different patient, the previously ingested EHR is discarded
+and a new ingestion pipeline is executed.
 
 ### 2. Chunking Strategy
 
-The EHR is split into semantically meaningful chunks based on clinical sections:
+The JSON EHR is split into semantically meaningful chunks based on clinical sections:
 
 * Demographics
 
 * Medical history
 
-* Medications
+* Current Medications
+
+* Chronic Conditions
 
 * Allergies
 
@@ -101,14 +109,23 @@ Each chunk contains:
 
 Type of section
 
-Optional date (for temporal data)
+Optional date
 
 Human-readable text representation
 
 Example chunk:
 
-    Patient P001. Current medications: Metformin 850mg twice daily, Losartan 50mg once daily.
+```json
+   {
+   "type": "recent_visit",
+   "content": "Fasting glucose: 128 mg/dL. Blood pressure: 135/85. Losartan dosage adjusted.",
+   "date": "2024-10-15",
+   "doctor": "Dra. Martínez",
+   "source": "Appointment (2024-10-15) with Dra. Martínez"
+   }
+```
 
+Note: Example content may appear in Spanish or English, reflecting real-world EHR variability.
 
 Design decision:
 
@@ -121,7 +138,7 @@ only the available information.
 
 This ensures robustness when working with partial or sparse EHR data.
 
-###  3. Context Enrichment (for Embeddings)
+### 3. Context Enrichment (for Embeddings)
 
 Before embedding, each chunk is enriched with lightweight semantic hints
 based on its clinical section.
@@ -132,11 +149,35 @@ the original data.
 
 This ensures embeddings remain effective even when:
 
-Field names and the content are in different languages
+* Field names and the content are in different languages
+
+* The content lacks sufficient contextual information for reliable embedding similarity
 
 Design decision:
 
-Enrichment is applied only to the text used for embeddings, not to the original data.
+* Enrichment is applied only to the text used for embeddings, not to the original data.
+
+* Enrichment is implemented using a static, explicit section-to-hint mapping
+  (bilingual Spanish/English). This approach avoids dynamic or model-driven
+  enrichment, favoring transparency and reproducibility.
+
+* The mapping is intentionally embedded in code for this exercise but could
+  be externalized in a real deployment.
+
+In real-world EHRs, clinical content may appear in different languages or
+lack sufficient context on its own. Semantic enrichment bridges this gap
+by injecting bilingual contextual hints.
+
+For example, the section type `recent_visit` is enriched using:
+
+```json
+{
+  "recent_visit": {
+    "es": "visita reciente",
+    "en": "recent visit"
+  }
+}
+```
 
 ### 4. Embeddings & Vector Store
 
@@ -144,15 +185,15 @@ A single embedding per chunk is generated
 
 Embeddings are stored in an in-memory vector store
 
-Metadata (patient_id, section, date) is stored alongside vectors
-
 Design decision:
 
-Use of Ollama embeddings due to lack of valid API Keys
+* Use of Ollama embeddings due to the absence of valid API keys
 
-No complex embedding hierarchies
+* No complex embedding hierarchies
 
-No reranking or cross-encoders
+* No reranking or cross-encoders
+
+* Use of an in-memory vector store, as the system operates on a single patient at a time and embeddings are loaded on-demand per user selection.
 
 This keeps retrieval transparent and easy to debug
 
@@ -160,9 +201,9 @@ This keeps retrieval transparent and easy to debug
 
 At query time:
 
-The question is embedded
+* The question is embedded
 
-Relevant chunks are retrieved via similarity search
+* Relevant chunks are retrieved via similarity search
 
 Design decision:
 
@@ -180,7 +221,7 @@ Dynamic chunk selection is intentionally deferred.
 
 The retrieved chunks are:
 
-* Rewritten to reduce the tokens costs without losing important information
+* Rewritten to reduce token costs without losing important information
 
 * Merged into a structured context
 
@@ -188,39 +229,56 @@ This context is passed to the LLM along with the clinician’s question.
 
 Design decision:
 
-Context assembly is explicit and deterministic.
+* Context assembly is explicit and deterministic.
 
-The LLM is not responsible for deciding relevance.
+* The LLM is not responsible for deciding relevance.
 
-The context builder is intentionally simple.
+* The context builder is intentionally simple.
 Its responsibility is formatting and token reduction, not interpretation.
 
-Recursive formatting is supported to handle nested structures deterministically.
+* Recursive formatting is supported to handle nested structures deterministically.
 
 
 ### 7. LLM Agent
 
 The agent:
 
-Receives the structured context
+* Receives the structured context
 
-Answers the question using only the provided information
+* Answers the question using only the provided information
 
-Produces grounded responses
+* Produces grounded responses
 
 The system supports:
 
-Local LLM execution using Ollama
+* Local LLM execution using Ollama
 
-Pluggable LLM backends
+* Pluggable LLM backends
+
+### 8. API Layer
+
+The system exposes a minimal HTTP API using Flask.
+
+Design decision:
+
+* Flask was selected because it is lightweight, easy to reason about, and sufficient
+  for demonstrating the end-to-end RAG workflow.
+
+* The API layer is intentionally thin and does not implement advanced concerns
+  such as authentication, concurrency control, or request orchestration.
+
+* In a production setting, alternative frameworks (e.g., FastAPI, Django, or
+  dedicated inference gateways) would be evaluated based on scalability,
+  observability, and deployment requirements.
+
 
 ## Grounding & Traceability
 
 Every answer can be traced back to:
 
-Section of the EHR
+* Section of the EHR
 
-Visit date or lab date (when applicable)
+* Visit date or lab date (when applicable)
 
 Example:
 
@@ -235,7 +293,7 @@ The system is covered by unit tests focusing on deterministic behavior:
 - Ingestion tests validate file loading and structure handling
 - Chunking tests ensure correct chunk generation under partial data
 - Enrichment tests verify that semantic context is added when expected
-- Retrieval tests validate similarity-based selection
+- Retrieval tests validate similarity-based selection functionality
 - RAG service tests validate end-to-end flow with mocked components
 
 Non-deterministic components (LLMs, embeddings) are tested indirectly
@@ -244,13 +302,14 @@ or mocked to preserve reproducibility.
 The goal of testing is correctness and robustness, not model quality.
 
 
-# Configuration
+## Configuration
 
 The system is partially configurable via environment variables using a `.env` file.
 This allows changing the LLM provider, model, and EHR data source without modifying
-application code.
+application code, while keeping some parameters (e.g., embedding model and retrieval
+top-k) fixed for simplicity.
 
-## Environment Variables
+### Environment Variables
 
 | Variable | Description |
 |--------|-------------|
@@ -260,15 +319,15 @@ application code.
 | OPENAI_API_KEY | Required when using OpenAI |
 | GOOGLE_API_KEY | Required when using Google Gemini |
 
-## Example `.env`
+### Example `.env`
 
 ```env
-MEDICAL_EHR_LOCATION=E:\Python-projects\Medical-AI\data
+MEDICAL_EHR_LOCATION=E:\EHR-AI\data
 MEDICAL_LLM_PROVIDER=ollama
 MEDICAL_LLM_MODEL=qwen3:4b
 ```
 
-## Switching Providers Example
+### Switching Providers Example
 
 To use Google Gemini:
 
@@ -279,8 +338,8 @@ GOOGLE_API_KEY=your_api_key_here
 ```
 
 
-# Running the Project
-## Prerequisites
+## Running the Project
+### Prerequisites
 
 - Python 3.10+
 - Ollama installed locally
@@ -288,43 +347,82 @@ GOOGLE_API_KEY=your_api_key_here
   - `qwen3:4b` (LLM for answering questions)
   - `nomic-embed-text` (embedding model for retrieval)
 
-note: `qwen3:4b` can be replaced by any model in Ollama
+Note: `qwen3:4b` can be replaced by any other Ollama-supported model.
+It was selected because it is relatively small while still producing
+high-quality answers when paired with an effective RAG pipeline.
 
 ## Setup
 
+It is recommended to run the project inside a virtual environment to
+isolate dependencies and avoid conflicts with other Python projects.
+
+### 1. Create a virtual environment
+
+```bash
 python -m venv venv
+```
 
-source venv/bin/activate   # Windows: venv\Scripts\activate
+### 2. Activate the virtual environment
 
+#### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+#### macOS / Linux
+
+```bash
+source venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-## Pull Required Ollama Models
 
-Before running the application, make sure the required models are available locally:
+### 4. Pull Required Ollama Models
+
+Ensure the required models are available locally:
 
 ```bash
 ollama pull qwen3:4b
 ollama pull nomic-embed-text
 ```
 
+You can verify available models with:
 
-## Start Ollama
+ollama list
+
+## 5. Start Ollama
+
+Make sure the Ollama service is running:
 
 ```bash
 ollama run qwen3:4b
 ```
 
-## Run the Application
+### 6. Run the Application
 
+In a separate terminal, run the application:
+
+```bash
 python main.py
+```
+
+## 7. Quick Sanity Check
+
+Once the application is running, you should see:
+
+- Flask server running on `http://127.0.0.1:5000`
+- No errors related to missing models or environment variables
+
+You can verify the API by sending a test request to `/ask`.
 
 
-## The Flask API will start at:
-
-http://127.0.0.1:5000
-
-
-## API Example
+### 8. API Request Example
 
 POST /ask
 
@@ -337,29 +435,30 @@ POST /ask
 
 ## Trade-offs & Limitations
 
-Vector store is in-memory (non-persistent)
-
-No advanced reranking or hybrid search
-
-Design for demo purposes
-
-Different LLM providers may produce slightly different answers due to model behavior, even when using the same context.
+- Design for demo purposes
+- Interfaces and abstractions were intentionally minimized, as they were not required for the core functionality.
+- No large architectural patterns (e.g., repositories, ports/adapters) were introduced to avoid unnecessary complexity.
+- The system is designed for single-user interaction and does not handle concurrent sessions.
+- EHR ingestion is performed on demand and replaces the current in-memory state.
+- Vector store is in-memory (non-persistent)
+- No advanced reranking or hybrid search
+- Different LLM providers may produce slightly different answers due to model behavior, even when using the same context.
 
 ## Future Improvements
 
-Persistent vector database
+* Persistent vector database
 
-Reranking with cross-encoders
+* Reranking with cross-encoders
 
-Query rewriting for complex questions
+* Query rewriting for complex questions
 
-Global retrieval queries
+* Global retrieval queries
 
-More configurable options (Embeddings)
+* More configurable options (Embeddings)
 
-Access control
+* Access control
 
-Audit logging
+* Audit logging
 
 ## Conclusion
 
@@ -369,3 +468,9 @@ for medical question answering.
 It prioritizes clarity, traceability, and modularity over optimization, making
 it suitable as a reference architecture for clinical RAG systems, educational
 purposes, or early-stage prototypes.
+
+Based on empirical experimentation, the results show that model size is not a
+critical factor as long as the RAG pipeline retrieves accurate and relevant
+context. Even when using a relatively small local model via Ollama (~1.2 GB),
+the system was able to generate coherent and medically meaningful answers when
+the retrieved information was correct.
