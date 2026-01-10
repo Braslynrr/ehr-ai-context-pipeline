@@ -1,4 +1,5 @@
-import dspy
+from .llm_factory import createLLm
+from ehr_ai_core.configuration import Config
 
 class EHRAgent:
     """
@@ -7,8 +8,8 @@ class EHRAgent:
 
     __llm = None
 
-    def __init__(self, llm):
-        self.__llm = llm
+    def __init__(self, config:Config):
+        self.__llm = createLLm(config)
 
     def Predict(self, question: str, context: str) -> str:
 
@@ -24,6 +25,5 @@ class EHRAgent:
                             Question: {question}
                             context: {context}
                    """)
-        
         
         return "".join(result)

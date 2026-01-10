@@ -47,6 +47,20 @@ The focus of this implementation is clarity, traceability, and end-to-end functi
            ▼
         Answer + Sources
 
+## UML Diagram
+
+The following UML diagram illustrates the high-level relationships between
+core modules in the system.
+
+It emphasizes:
+
+- Clear module boundaries
+- Dependency direction
+- Separation between configuration, services, and agents
+
+![System UML Diagram](docs/uml/system_architecture.png)
+
+
 ## Core Components
 ### 1. Ingestion Pipeline
 
@@ -63,6 +77,9 @@ Pass raw data to the chunking stage
 Design decision:
 
 The original EHR structure is preserved to reflect real-world constraints where data normalization is often infeasible.
+
+Ingestion performs minimal validation only. Any missing or optional fields are handled downstream to avoid early failures
+and to reflect real-world incomplete medical records.
 
 ### 2. Chunking Strategy
 
@@ -96,14 +113,22 @@ Example chunk:
 Design decision:
 
 Chunking by clinical meaning, not by token size.
-
 This improves interpretability and grounding.
+
+Chunking is defensive by design.
+Missing fields do not cause failures; instead, chunks are generated using
+only the available information.
+
+This ensures robustness when working with partial or sparse EHR data.
 
 ###  3. Context Enrichment (for Embeddings)
 
-Before embedding, each chunk is enriched with:
+Before embedding, each chunk is enriched with lightweight semantic hints
+based on its clinical section.
 
-Temporal hints (when applicable) in spanish and english initially.
+This compensates for sections that lack sufficient standalone context
+(e.g. lab results, visits) and improves embedding quality without modifying
+the original data.
 
 This ensures embeddings remain effective even when:
 
@@ -155,6 +180,12 @@ Context assembly is explicit and deterministic.
 
 The LLM is not responsible for deciding relevance.
 
+The context builder is intentionally simple.
+Its responsibility is formatting and token reduction, not interpretation.
+
+Recursive formatting is supported to handle nested structures deterministically.
+
+
 ### 7. LLM Agent
 
 The agent:
@@ -184,6 +215,22 @@ Example:
     “According to the visit on 2024-10-15, the patient’s fasting glucose was 128 mg/dL.”
 
 This ensures transparency and clinical safety.
+
+## Testing Strategy
+
+The system is covered by unit tests focusing on deterministic behavior:
+
+- Ingestion tests validate file loading and structure handling
+- Chunking tests ensure correct chunk generation under partial data
+- Enrichment tests verify that semantic context is added when expected
+- Retrieval tests validate similarity-based selection
+- RAG service tests validate end-to-end flow with mocked components
+
+Non-deterministic components (LLMs, embeddings) are tested indirectly
+or mocked to preserve reproducibility.
+
+The goal of testing is correctness and robustness, not model quality.
+
 
 # Configuration
 
@@ -228,6 +275,8 @@ GOOGLE_API_KEY=your_api_key_here
 - The following Ollama models pulled locally:
   - `qwen3:4b` (LLM for answering questions)
   - `nomic-embed-text` (embedding model for retrieval)
+
+note: `qwen3:4b` can be replaced by any model in Ollama
 
 ## Setup
 
@@ -302,5 +351,9 @@ Audit logging
 
 ## Conclusion
 
-This project demonstrates a complete, explainable context engineering pipeline suitable for clinical decision support.
-The design prioritizes clarity, traceability, and modularity, making it easy to extend or producti
+This project demonstrates a complete, explainable context engineering pipeline
+for medical question answering.
+
+It prioritizes clarity, traceability, and modularity over optimization, making
+it suitable as a reference architecture for clinical RAG systems, educational
+purposes, or early-stage prototypes.

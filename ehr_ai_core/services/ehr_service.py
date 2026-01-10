@@ -1,11 +1,12 @@
 from ehr_ai_core.aiagent import EHRAgent
+from ehr_ai_core.context import context_builder
 from .rag_service import RagService
 
-class MedicalService:
+class EHRService:
     '''
     Handles the entire process of ingestion, retrieving and dynamically responses
     '''
-
+    lastfile = ""
     rag:RagService
     agent: EHRAgent
 
@@ -13,8 +14,13 @@ class MedicalService:
         self.rag = rag
         self.agent = agent
 
-    def answer(self, filepath:str , question:str) -> str:
-        self.rag.ingestion(filepath)
+    def answer_clinical_question(self, filepath:str , question:str) -> str:
+        if lastfile != filepath:
+            self.rag.ingestion(filepath)
+            lastfile = filepath
         relevant_chunks = self.rag.search(question)
-        answer = self.agent.Predict(question, relevant_chunks)
+
+        context = context_builder(relevant_chunks)
+        
+        answer = self.agent.Predict(question, context)
         return answer

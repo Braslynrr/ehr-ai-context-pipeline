@@ -1,3 +1,3 @@
-from .medical_api import create_app
+from .ehr_api import create_app
 
 __all__ = ["create_app"]

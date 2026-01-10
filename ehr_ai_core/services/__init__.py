@@ -1,4 +1,4 @@
 from .rag_service import RagService
-from .medical_service import MedicalService
+from .ehr_service import EHRService
 
 __all__ = ["MedicalService","RagService"]

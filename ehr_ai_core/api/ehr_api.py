@@ -1,9 +1,9 @@
-from ehr_ai_core.services import MedicalService
+from ehr_ai_core.services import EHRService
 from ehr_ai_core.configuration import Config
 from flask import Flask, jsonify, request, render_template
 from os import walk, path
 
-def create_app(medical_service:MedicalService, config:Config):
+def create_app(medical_service:EHRService, config:Config):
     app = Flask(__name__)
 
     @app.route("/", methods=["GET"])
@@ -22,7 +22,7 @@ def create_app(medical_service:MedicalService, config:Config):
         patient = request.json["patient"]
         question = request.json["question"]
         
-        result = medical_service.answer(f"{path.join(config.get_ehr_location(),f"ehr_{patient}.json")}", question)
+        result = medical_service.answer_clinical_question(f"{path.join(config.get_ehr_location(),f"ehr_{patient}.json")}", question)
         return jsonify(result)
 
     return app
