@@ -16,8 +16,8 @@ SEMANTIC_HINTS = {
         "en": "patient demographic information"
     },
     "chronic_conditions": {
-        "es": "condiciones cronicas",
-        "en": "chronic conditions"
+        "es": "condiciones cronicas, padecimientos , enfermedades",
+        "en": "chronic conditions, diseases"
     },
     "recent_visit": {
         "es": "visita reciente",

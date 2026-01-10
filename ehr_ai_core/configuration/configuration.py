@@ -14,7 +14,14 @@ class Config:
 
     def __init__(self, max_tokens = 4000):
 
-        self._ehr_location = _get_required_env("MEDICAL_EHR_LOCATION")
+        self.__ehr_location = _get_required_env("MEDICAL_EHR_LOCATION")
+
+        if not os.path.isdir(self.__ehr_location):
+            raise RuntimeError(
+                f"EHR location '{self.__ehr_location}' is not a valid directory. "
+                "Please provide an existing folder path."
+            )
+
         self.provider = _get_required_env("MEDICAL_LLM_PROVIDER")
         self.model = _get_required_env("MEDICAL_LLM_MODEL")
         self.max_tokens = max_tokens

@@ -11,13 +11,14 @@ document.getElementById("sendBtn").addEventListener("click", async () => {
         return;
     }
 
+    information.innerText = "Loading your answer..."
     responseBox.innerHTML += `
             <p><strong>Question:</strong> ${question}</p>
             <hr />`
              
     button.disabled = true;
     questionInput.value = ""
-    information.innerText = "Loading your answer..."
+
     let asnwer = await askQuestion(patient,question)
 
     information.innerText = ""

@@ -1,4 +1,4 @@
-# Medical AI Assistant – Context Engineering Pipeline
+# EHR AI Assistant – Context Engineering Pipeline
 ## Overview
 
 This project implements a context engineering pipeline that enables an AI agent to assist clinicians during medical consultations.

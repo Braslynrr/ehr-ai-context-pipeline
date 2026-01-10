@@ -15,9 +15,9 @@ class EHRService:
         self.agent = agent
 
     def answer_clinical_question(self, filepath:str , question:str) -> str:
-        if lastfile != filepath:
+        if self.lastfile != filepath:
             self.rag.ingestion(filepath)
-            lastfile = filepath
+            self.lastfile = filepath
         relevant_chunks = self.rag.search(question)
 
         context = context_builder(relevant_chunks)
