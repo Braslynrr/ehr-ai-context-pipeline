@@ -15,7 +15,7 @@ def context_builder(chunks , max_chars=3000):
         else:
             content = original_content
 
-        block = f"[Fuente: {c["source"]}] {os.linesep}{content}\n"
+        block = f"[Fuente: {c['source']}] {os.linesep}{content}\n"
         if total + len(block) > max_chars:
             break
         parts.append(block)

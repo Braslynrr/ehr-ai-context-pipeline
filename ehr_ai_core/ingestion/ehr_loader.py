@@ -16,7 +16,7 @@ def _validate_structure(ehr:dict):
         if section not in ehr:
             missing_sections.append(section)
     if len(missing_sections) > 0:
-        raise ValueError(f"The ehr needs the following sections to be acceptable :[{"".join(missing_sections)}]")
+        raise ValueError(f"The ehr needs the following sections to be acceptable: [{''.join(missing_sections)}]")
     
 
 def _normalize_ehr(ehr:dict):

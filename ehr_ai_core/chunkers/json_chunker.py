@@ -6,7 +6,7 @@ def ehr_json_chunkifier(ehr:dict) -> list:
             {
              "type":"demographics",   
              "content": ehr.get("demographics",[]), 
-             "source": f"Patient EHR - {ehr.get("patient_id",[])}"
+             "source": f"Patient EHR - {ehr.get('patient_id', [])}"
             })
     
     medical_history = ehr.get("medical_history",[])
@@ -24,10 +24,10 @@ def ehr_json_chunkifier(ehr:dict) -> list:
         chunks.append(
             {
                 "type":"recent_visit",
-                "content" : f"Reason: {visit["reason"]} {os.linesep}Notes: {visit["notes"]}",
+                "content" : f"Reason: {visit['reason']} {os.linesep}Notes: {visit['notes']}",
                 "date": visit["date"],
                 "doctor": visit["doctor"],
-                "source": f"Appointment ({visit["date"]}) with {visit["doctor"]}"
+                "source": f"Appointment ({visit['date']}) with {visit['doctor']}"
             }
         )
 
@@ -40,7 +40,7 @@ def ehr_json_chunkifier(ehr:dict) -> list:
                 "type":"lab_result",
                 "content" : {"test": lab["test"] , "results": lab["results"] },
                 "date": lab["date"],
-                "source": f"Laboratory result on {lab["date"]}"
+                "source": f"Laboratory result on {lab['date']}"
             }
         )
 
