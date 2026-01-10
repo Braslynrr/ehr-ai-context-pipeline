@@ -1,5 +1,6 @@
 import json
 from ehr_ai_core.services import RagService
+from unittest.mock import patch
 
 def test_rag_search(mocker):
     
@@ -13,7 +14,11 @@ def test_rag_search(mocker):
 
     assert result is not None
 
-def test_rag_ingestion(tmp_path, ehr_data_normalized):
+@patch("ehr_ai_core.retrieval.embedding.embeddings")
+def test_rag_ingestion(mock_embeddings, tmp_path, ehr_data_normalized):
+    mock_embeddings.return_value = {
+        "embedding": [0.1] * 768
+    }
 
     rag = RagService()
 

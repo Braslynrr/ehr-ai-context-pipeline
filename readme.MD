@@ -1,4 +1,7 @@
 # EHR AI Assistant – Context Engineering Pipeline
+
+[![CI](https://github.com/Braslynrr/ehr-ai-context-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Braslynrr/ehr-ai-context-pipeline/actions/workflows/ci.yml)
+
 ## Overview
 
 This project implements a context engineering pipeline that enables an AI agent to assist clinicians during medical consultations.
@@ -61,7 +64,7 @@ It emphasizes:
 - Dependency direction
 - Separation between configuration, services, and agents
 
-![System UML Diagram](docs/uml/system_architecture.png)
+![System UML Diagram](docs/UML/system_architecture.png)
 
 
 ## Core Components
