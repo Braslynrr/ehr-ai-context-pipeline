@@ -38,3 +38,15 @@ def ehr_data_normalized():
         }
     ]
 }
+
+@pytest.fixture
+def ehr_minimal_data():
+    return {
+        "patient_id": "P001",
+        "demographics": {"name": "Test"},
+        "medical_history": {
+            "chronic_conditions": [],
+            "allergies": ["test"],
+            "current_medications": []},
+        "recent_visits": [{"date": "2024-08-20"}],
+        "lab_results": [{"date": "2024-10-10"}]}
