@@ -164,6 +164,18 @@ The question is embedded
 
 Relevant chunks are retrieved via similarity search
 
+Design decision:
+
+The retriever currently returns a fixed number of chunks (k=2).
+
+This was chosen intentionally:
+- It reduces noise in the LLM context
+- Improves traceability
+- Keeps the system deterministic and explainable
+- Empirically works well for the supported clinical queries
+
+Dynamic chunk selection is intentionally deferred.
+
 ### 6. Context Builder
 
 The retrieved chunks are:

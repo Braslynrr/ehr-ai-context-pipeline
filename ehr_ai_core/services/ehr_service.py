@@ -18,6 +18,8 @@ class EHRService:
         if self.lastfile != filepath:
             self.rag.ingestion(filepath)
             self.lastfile = filepath
+
+        # Retriever step
         relevant_chunks = self.rag.search(question)
 
         context = context_builder(relevant_chunks)
