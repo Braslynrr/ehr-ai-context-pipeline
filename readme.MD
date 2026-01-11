@@ -110,11 +110,11 @@ The JSON EHR is split into semantically meaningful chunks based on clinical sect
 
 Each chunk contains:
 
-Type of section
+* Type of section
 
-Optional date
+* Optional date
 
-Human-readable text representation
+* Human-readable text representation
 
 Example chunk:
 
@@ -130,12 +130,12 @@ Example chunk:
 
 Note: Example content may appear in Spanish or English, reflecting real-world EHR variability.
 
-Design decision:
+* Design decision:
 
-Chunking by clinical meaning, not by token size.
+* Chunking by clinical meaning, not by token size.
 This improves interpretability and grounding.
 
-Chunking is defensive by design.
+* Chunking is defensive by design.
 Missing fields do not cause failures; instead, chunks are generated using
 only the available information.
 
@@ -345,7 +345,7 @@ GOOGLE_API_KEY=your_api_key_here
 ### Prerequisites
 
 - Python 3.10+
-- Ollama installed locally
+- Ollama installed locally ([official download page](https://ollama.com/download))
 - The following Ollama models pulled locally:
   - `qwen3:4b` (LLM for answering questions)
   - `nomic-embed-text` (embedding model for retrieval)
@@ -370,7 +370,10 @@ python -m venv venv
 #### Windows
 
 ```bash
-venv\Scripts\activate
+# In cmd.exe
+venv\Scripts\activate.bat
+# In PowerShell
+venv\Scripts\Activate.ps1
 ```
 
 #### macOS / Linux
@@ -397,7 +400,9 @@ ollama pull nomic-embed-text
 
 You can verify available models with:
 
+```bash
 ollama list
+```
 
 ## 5. Start Ollama
 
@@ -435,6 +440,19 @@ POST /ask
   "question": "How has the patient's glucose evolved?"
 }
 ```
+
+## Examples
+
+See the following real execution examples using the full pipeline and a local LLM:
+
+- [Medication query (English)](examples/medication_query.md)
+- [Recent visit query (English)](examples/recent_visit_query.md)
+- [Consulta clínica en español](examples/spanish_clinical_query.md)
+
+Notes:
+- No language-specific prompt tuning or routing was applied
+- The response is fully driven by retrieved EHR context
+- The same pipeline is used for all languages
 
 ## Trade-offs & Limitations
 
