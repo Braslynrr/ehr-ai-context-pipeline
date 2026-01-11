@@ -304,6 +304,13 @@ or mocked to preserve reproducibility.
 
 The goal of testing is correctness and robustness, not model quality.
 
+## EHR Data Format
+
+This project expects EHR files to follow a predefined JSON structure.
+Example EHR files are available in the `data/` directory and are used
+throughout the provided examples.
+
+The schema is intentionally simple and designed for demonstration purposes.
 
 ## Configuration
 
@@ -311,6 +318,10 @@ The system is partially configurable via environment variables using a `.env` fi
 This allows changing the LLM provider, model, and EHR data source without modifying
 application code, while keeping some parameters (e.g., embedding model and retrieval
 top-k) fixed for simplicity.
+
+Create a `.env` file in the project root directory (same level as `pyproject.toml`)
+to configure the application.
+
 
 ### Environment Variables
 
@@ -456,6 +467,9 @@ Notes:
 
 ## Trade-offs & Limitations
 
+- The provided EHR data is fully synthetic and written in Spanish to avoid the use of real patient information.
+- As a result, example queries and responses perform best in Spanish, which is the language of the source records.
+- English queries are supported by the pipeline but may retrieve slightly less relevant context due to cross-lingual embedding limitations.
 - Design for demo purposes
 - Interfaces and abstractions were intentionally minimized, as they were not required for the core functionality.
 - No large architectural patterns (e.g., repositories, ports/adapters) were introduced to avoid unnecessary complexity.
@@ -464,6 +478,7 @@ Notes:
 - Vector store is in-memory (non-persistent)
 - No advanced reranking or hybrid search
 - Different LLM providers may produce slightly different answers due to model behavior, even when using the same context.
+- CI runs unit tests only. End-to-end execution requires a local Ollama setup.
 
 ## Future Improvements
 

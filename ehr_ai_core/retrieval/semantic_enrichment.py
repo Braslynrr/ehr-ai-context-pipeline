@@ -42,7 +42,7 @@ def build_enriched_text(chunk: dict) -> str:
     relevantcontent = "" 
     for c in chunk:
         if c in KEYS:
-            relevantcontent+= f"{c}: {chunk[c]}\n"
+            relevantcontent+= f"{c}: {__join_object(chunk[c])}\n"
 
     return f"""
 {semantic_text}
@@ -54,3 +54,15 @@ def enrich_text_from_list(chunks:list[dict]) -> list[str]:
     for chunk in chunks:
         result.append(build_enriched_text(chunk))
     return result
+
+def __join_object(obj):
+    if isinstance(obj,dict):
+        content = "\n"
+        for key,val in obj.items():
+            val_content = __join_object(val)
+            content += f"{key}: {val_content}\n"
+        return content
+    elif isinstance(obj, list):
+        return ", ".join(__join_object(item) for item in obj)
+    else:
+        return str(obj)
