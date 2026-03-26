@@ -14,15 +14,23 @@ class EHRService:
         self.rag = rag
         self.agent = agent
 
-    def answer_clinical_question(self, filepath:str , question:str) -> str:
-        if self.lastfile != filepath:
-            self.rag.ingestion(filepath)
-            self.lastfile = filepath
-
-        # Retriever step
+    def answer_clinical_question(self, question:str) -> str:
         relevant_chunks = self.rag.search(question)
 
         context = context_builder(relevant_chunks)
         
-        answer = self.agent.Predict(question, context)
+        answer =  self.agent.Predict(question, context) 
         return answer
+    
+
+    def stream_answer_clinical_question(self, question:str):
+        relevant_chunks = self.rag.search(question)
+        context = context_builder(relevant_chunks)
+
+        for chunk in self.agent.Streaming_Prediction(question, context):
+            yield chunk
+
+
+    def get_Patients(self):
+        patients = self.rag.get_patients()
+        return patients

@@ -7,20 +7,17 @@ def _get_required_env(key: str) -> str:
     return value
 
 class Config:
-    __ehr_location:str
+    same_site:str
+
     provider:str
     model:str
     max_tokens:int
+    
+    JWT_SECRET_KEY:str
+    JWT_ALGORITHM:str
+
 
     def __init__(self, max_tokens = 4000):
-
-        self.__ehr_location = _get_required_env("MEDICAL_EHR_LOCATION")
-
-        if not os.path.isdir(self.__ehr_location):
-            raise RuntimeError(
-                f"EHR location '{self.__ehr_location}' is not a valid directory. "
-                "Please provide an existing folder path."
-            )
 
         self.provider = _get_required_env("MEDICAL_LLM_PROVIDER")
         self.model = _get_required_env("MEDICAL_LLM_MODEL")
@@ -32,7 +29,7 @@ class Config:
         if self.provider == "openai":
             _get_required_env("OPENAI_API_KEY")
 
-    
-    def get_ehr_location(self) -> str:
-        return self.__ehr_location
+        self.JWT_ALGORITHM = _get_required_env("JWT_ALGORITHM")
+        self.JWT_SECRET_KEY = _get_required_env("JWT_SECRET_KEY")
 
+        self.same_site = _get_required_env("SAME_SITE")

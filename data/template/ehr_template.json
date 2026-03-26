@@ -1,0 +1,33 @@
+{
+  "patient_id": "",
+  "demographics": {
+    "name": "",
+    "age": 0,
+    "gender": "",
+    "blood_type": ""
+  },
+  "medical_history": {
+    "chronic_conditions": [],
+    "allergies": [],
+    "current_medications": [
+      {"name": "", "dose": "", "frequency": ""}
+    ]
+  },
+  "recent_visits": [
+    {
+      "date": "0000-00-00",
+      "reason": "",
+      "notes": "",
+      "doctor": ""
+    }
+  ],
+  "lab_results": [
+    {
+      "date": "0000-00-00",
+      "test": "",
+      "results": {
+        "Name": "result"
+      }
+    }
+  ]
+}
