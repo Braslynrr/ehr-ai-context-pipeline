@@ -19,7 +19,7 @@ export default function ChatHistoyMessage({ chatMessage }: ChatHistoryMessagePro
                         Thinking...
                     </span>
                 ) : (
-                    <div className="prose prose-sm max-w-none">
+                    <div className="max-w-none">
                         <ReactMarkdown>
                             {chatMessage.text}
                         </ReactMarkdown>

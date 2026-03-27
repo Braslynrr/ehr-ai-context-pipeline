@@ -10,7 +10,6 @@ export async function apiClient<T>(
 ): Promise<T> {
   let url = `${BASE_URL}${endpoint}`
 
-  console.log(BASE_URL)
 
   if (options.params) {
     const query = new URLSearchParams(options.params).toString()

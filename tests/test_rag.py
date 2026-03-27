@@ -16,7 +16,7 @@ def test_rag_search(mocker):
 
     assert result == []
 
-@patch("ehr_ai_core.retrieval.embedding.embeddings")
+@patch("ehr_ai_core.retrieval.embedding.Client.embeddings")
 def test_rag_ingestion(mock_embeddings, tmp_path, ehr_data_normalized):
 
     mock_embeddings.return_value = {
