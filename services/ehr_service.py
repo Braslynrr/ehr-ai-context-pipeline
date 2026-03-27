@@ -23,8 +23,8 @@ class EHRService:
         return answer
     
 
-    def stream_answer_clinical_question(self, question:str):
-        relevant_chunks = self.rag.search(question)
+    def stream_answer_clinical_question(self, question:str, patientId:str | None = None):
+        relevant_chunks = self.rag.search(question, patientId)
         context = context_builder(relevant_chunks)
 
         for chunk in self.agent.Streaming_Prediction(question, context):

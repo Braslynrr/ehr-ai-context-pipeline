@@ -14,5 +14,8 @@ def createLLm(provider:str, model:str, max_tokens:str):
     return llm
 
 
-def createOllamaStreaming(model:str):
-        pass
+def createOllamaStreaming(model:str, url:str):
+        return {
+              "model":model,
+              "url": url
+        }

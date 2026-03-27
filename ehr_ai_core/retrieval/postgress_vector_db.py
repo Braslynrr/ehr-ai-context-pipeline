@@ -88,10 +88,9 @@ class Postgress_db(IVector):
         }
     
     def _map_patient_to_chunk(self, row):
-        return {
-            "patient_id": row[0],
-            "content": row[1],
-        }
+        patient = row[1]
+        patient["patient_id"] = row[0]
+        return patient
     
     def get_patients(self)-> list[tuple]:
         cursor = self.__conn.cursor()

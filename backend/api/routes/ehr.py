@@ -16,7 +16,7 @@ def get_patients(medical_service:EHRService = Depends(get_medical_service) ,payl
 def resolve_query(data: QueryRequest, medical_service:EHRService = Depends(get_medical_service), payload:dict = Depends(verify_token)):
 
     def generator():
-        for chunk in medical_service.stream_answer_clinical_question(data.query):
+        for chunk in medical_service.stream_answer_clinical_question(data.query, patientId=data.patientId):
             yield chunk
 
     return StreamingResponse(generator(), media_type="text/event-stream")

@@ -2,21 +2,21 @@ version: "3.9"
 
 services:
 
-  postgres:
+  ehr_postgres:
     image: ankane/pgvector:latest
     container_name: ehr_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ehr_user
-      POSTGRES_PASSWORD: ehr_password
-      POSTGRES_DB: ehr_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
-  ollama:
+  ehr_ollama:
     image: ollama/ollama:latest
     container_name: ehr_ollama
     restart: unless-stopped
@@ -25,6 +25,66 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     command: ["serve"]
+
+  ehr_ingestion:
+    build:
+      context: .
+      dockerfile: pipeline_ingestion/Dockerfile
+    container_name: ingestion_service
+    depends_on:
+      - ehr_postgres
+      - ehr_ollama
+    environment:
+      MEDICAL_EHR_LOCATION: ${MEDICAL_EHR_LOCATION}
+      DB_HOST: ehr_postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+
+    volumes:
+      - ./data:/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: ehr_backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ehr_postgres
+      - ehr_ollama
+      - ehr_ingestion
+    environment:
+      - MEDICAL_LLM_PROVIDER=${MEDICAL_LLM_PROVIDER}
+      - MEDICAL_LLM_MODEL=${MEDICAL_LLM_MODEL}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM}
+      - SAME_SITE=${SAME_SITE}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - OLLAMA_URL=${OLLAMA_URL}
+    volumes:
+      - ./data:/data
+
+
+  ehr_frontend:
+    build:
+      context: ./ehr-frontend
+      dockerfile: Dockerfile
+    container_name: ehr_frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    environment:
+      - VITE_EHR_API_URL=${VITE_EHR_API_URL}
 
 volumes:
   postgres_data:

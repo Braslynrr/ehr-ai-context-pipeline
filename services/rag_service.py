@@ -1,5 +1,5 @@
 from ehr_ai_core.ingestion import load_ehr
-from ehr_ai_core.retrieval import InMemoryVectorStore, Embedder, enrich_text_from_list
+from ehr_ai_core.retrieval import Embedder, enrich_text_from_list
 from ehr_ai_core.chunkers import ehr_json_chunkifier
 from ehr_ai_core.retrieval.IVector_db import IVector
 
@@ -42,9 +42,9 @@ class RagService:
         self.__vectodb.add(embedded_chunks)
         
 
-    def search(self, question:str):
+    def search(self, question:str, patientId:str | None = None):
         embedded_question = self.__embedder.embed(question)
-        return self.__vectodb.search(embedded_question)
+        return self.__vectodb.search(embedded_question, patient_id=patientId)
     
     def get_patients(self):
         return self.__vectodb.get_patients()

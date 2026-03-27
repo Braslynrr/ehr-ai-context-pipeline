@@ -8,6 +8,7 @@ def _get_required_env(key: str) -> str:
 
 class Config:
     same_site:str
+    cors_origin:str
 
     provider:str
     model:str
@@ -15,6 +16,9 @@ class Config:
     
     JWT_SECRET_KEY:str
     JWT_ALGORITHM:str
+
+    ollama_url:str
+
 
 
     def __init__(self, max_tokens = 4000):
@@ -29,7 +33,13 @@ class Config:
         if self.provider == "openai":
             _get_required_env("OPENAI_API_KEY")
 
+        if self.provider == "ollama":
+            self.ollama_url = _get_required_env("OLLAMA_GENERATE_URL")
+
         self.JWT_ALGORITHM = _get_required_env("JWT_ALGORITHM")
         self.JWT_SECRET_KEY = _get_required_env("JWT_SECRET_KEY")
 
         self.same_site = _get_required_env("SAME_SITE")
+
+        self.cors_origin = _get_required_env("CORS_ORIGIN")
+
