@@ -6,9 +6,19 @@ export default function ChatHistoyMessage({ chatMessage }: ChatHistoryMessagePro
 
     if (!chatMessage.isAIGenerated)
         return <div className="flex flex-col gap-2 bg-gray-600 text-white borde shadow-sm rounded-xl px-12 py-3 w-full max-w-xs self-end">
-            <p>
-                {chatMessage.text}
-            </p>
+            {chatMessage.patient && (
+                <div className="text-xs text-gray-300 mb-1">
+                    Patient: {chatMessage.patient.name}
+                </div>
+            )}
+
+            <p className="break-words whitespace-pre-wrap">{chatMessage.text}</p>
+
+            {chatMessage.error && (
+                <div className="text-red-400 text-sm mt-1">
+                    ⚠ {chatMessage.error}
+                </div>
+            )}
         </div>
 
     return (

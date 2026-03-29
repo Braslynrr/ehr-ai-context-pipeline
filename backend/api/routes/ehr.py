@@ -1,8 +1,11 @@
+import json
+
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
 from backend.schemas.ehr_schemas import QueryRequest
 from backend.utils.utils import get_medical_service, verify_token
+from ehr_ai_core.error.app_error import AppError
 from services.ehr_service import EHRService
 
 router = APIRouter(prefix="/api/ehr", tags=["ehr"])
@@ -12,11 +15,32 @@ def get_patients(medical_service:EHRService = Depends(get_medical_service) ,payl
     return medical_service.get_Patients()
 
 
-@router.post("/ask/stream", summary="")
+@router.post("/ask", summary="schedule action according the given query")
 def resolve_query(data: QueryRequest, medical_service:EHRService = Depends(get_medical_service), payload:dict = Depends(verify_token)):
 
+    if not data.query:
+        raise AppError("Missing query", 400)
+    
+    return medical_service.get_stream_id(data.query, data.patientId)
+
+    
+
+@router.get("/stream/{id}", summary="perform streaming accion")
+def perform_stream_action(id:str, medical_service:EHRService = Depends(get_medical_service), payload:dict = Depends(verify_token)):
+
+    if not id:
+        raise AppError("Missing streamId", 400)
+
     def generator():
-        for chunk in medical_service.stream_answer_clinical_question(data.query, patientId=data.patientId):
-            yield chunk
+        try:
+            for chunk in medical_service.stream_answer_clinical_question(id, payload["doctor"]): yield f"data: {json.dumps(chunk)}\n\n"
+
+        except AppError as e:
+            yield f"event: error\ndata: {e.message}\n\n"
+
+        except Exception as e:
+            yield f"event: error\ndata: Internal server error\n\n"
+        finally:
+            yield f"data: {json.dumps({'chunk':'[DONE]'})}\n\n"
 
     return StreamingResponse(generator(), media_type="text/event-stream")

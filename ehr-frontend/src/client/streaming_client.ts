@@ -1,28 +1,36 @@
-import type { ChatRequest } from "../module/chat/chat.types"
-
 const BASE_URL = import.meta.env.VITE_EHR_API_URL
 
-export async function streamFetch(
+export async function streamEvent(
   endpoint: string,
-  body: ChatRequest,
-  onChunk: (chunk: string) => void
+  id: string,
+  onChunk: ({ chunk }: { chunk: string }) => void,
+  onErrorChatMessage: ({ error }: { error: string }) => void
 ) {
-  const res = await fetch(BASE_URL + endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-    body: JSON.stringify(body),
+
+  const evtSource = new EventSource(`${BASE_URL}${endpoint}${id}`, { withCredentials: true })
+
+  evtSource.onmessage = (event) => {
+
+    const data = JSON.parse(event.data)
+    onChunk(data)
+
+    if (data.chunk === "[DONE]") {
+      evtSource.close()
+      return
+    }
+  }
+
+  evtSource.onerror = () => {
+    const data = { "error": "Network error" }
+    onErrorChatMessage(data)
+    evtSource.close()
+  }
+
+  evtSource.addEventListener("error", (event: MessageEvent) => {
+    const data = { error: event.data }
+    onErrorChatMessage(data)
+    evtSource.close()
   })
 
-  const reader = res.body!.getReader()
-  const decoder = new TextDecoder()
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-
-    onChunk(decoder.decode(value))
-  }
 }

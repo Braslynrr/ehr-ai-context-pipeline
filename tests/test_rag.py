@@ -33,4 +33,4 @@ def test_rag_ingestion(mock_embeddings, tmp_path, ehr_data_normalized):
 
     rag.ingestion(str(file_path))
 
-    assert len(rag._RagService__vectodb.entries) > 0
+    assert len(rag._RagService__vectordb.entries) > 0

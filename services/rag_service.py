@@ -9,11 +9,11 @@ class RagService:
     """
         Handles EHR ingestion, embedding, and retrieval using an in-memory vector store.
     """
-    __vectodb:IVector
+    __vectordb:IVector
     __embedder: Embedder
 
     def __init__(self, db:IVector, embbeder:Embedder):
-        self.__vectodb = db
+        self.__vectordb = db
         self.__embedder = embbeder
         
     def ingestion(self, filepath:str):
@@ -39,12 +39,15 @@ class RagService:
         embedded_chunks = self.__embedder.embed_chunks(chunks, enriched_text)
 
         # adding embedding to the DB
-        self.__vectodb.add(embedded_chunks)
+        self.__vectordb.add(embedded_chunks)
         
 
     def search(self, question:str, patientId:str | None = None):
-        embedded_question = self.__embedder.embed(question)
-        return self.__vectodb.search(embedded_question, patient_id=patientId)
+        embedded_question = self.__embedder.embed(question.lower())
+        return self.__vectordb.search(embedded_question, patient_id=patientId)
     
     def get_patients(self):
-        return self.__vectodb.get_patients()
+        return self.__vectordb.get_patients()
+    
+    def get_patient(self, id:str):
+        return self.__vectordb.get_patients(id=id)[0]

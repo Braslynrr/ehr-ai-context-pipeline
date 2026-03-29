@@ -2,8 +2,11 @@ import requests
 import os
 
 def ensure_model(name:str):
-    ollama_url = os.getenv('OLLAMA_URL', 'http://ehr_ollama:11434')
-    requests.post(f"{ollama_url}/api/pull", json={"name": name})
+    try:
+        ollama_url = os.getenv('OLLAMA_URL', 'http://ehr_ollama:11434')
+        requests.post(f"{ollama_url}/api/pull", json={"name": name})
+    except Exception as e:
+        raise RuntimeError(f"Ollama ensuring failed: {e}")
 
 
 def ensure_Ollama():

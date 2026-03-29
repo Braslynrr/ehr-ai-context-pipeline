@@ -31,3 +31,7 @@ def login(data: LoginRequest, response:Response, config: Annotated[Config, Depen
 def logout(response:Response, payload:dict = Depends(verify_token)):
     response.delete_cookie("access_token")
     return {"message": "Logged out"}
+
+@router.get("/me", summary="get authentication status")
+def isAuthenticated(payload:dict = Depends(verify_token)):
+    return payload

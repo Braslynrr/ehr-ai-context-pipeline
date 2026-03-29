@@ -1,21 +1,47 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
+import { authMe } from "../module/auth/auth.api"
+
+type AuthStatus = "loading" | "authenticated" | "unauthenticated"
 
 type AuthContextType = {
-  isAuthenticated: boolean
-  login: () => void
+  status: AuthStatus
+  doctor: string|undefined
+  login: (doctor:string) => void
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [status, setStatus] = useState<AuthStatus>("loading")
+  const [doctor, setDoctor] = useState<string>()
 
-  const login = () => setIsAuthenticated(true)
-  const logout = () => setIsAuthenticated(false)
+  useEffect(() => {
+    authMe().then(res => {
+      if (res) {
+        setStatus("authenticated")
+        setDoctor(res.doctor)
+      }
+      else {
+        setStatus("unauthenticated")
+        setDoctor("")
+      }
+    })
+      .catch(() => setStatus("unauthenticated"))
+  }, [])
+
+  const login = (doctor:string) => {
+    setDoctor(doctor)
+    setStatus("authenticated")
+  }
+
+  const logout = () => {
+    setStatus("unauthenticated")
+    setDoctor("")
+  }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ status, login, logout, doctor }}>
       {children}
     </AuthContext.Provider>
   )

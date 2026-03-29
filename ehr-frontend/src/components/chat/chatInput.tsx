@@ -1,19 +1,22 @@
 import { useState } from "react";
-import { streamFetch } from "../../client/streaming_client";
 import type { ChatInputProps } from "../../module/chat/chat.types";
+import { getStream } from "../../module/chat/chat.api";
 
 
-export default function ChatInput({ AddNewMessage, updatedAnswer, patient }: ChatInputProps) {
+export default function ChatInput({ AddNewMessage, newStream , patient }: ChatInputProps) {
 
     const [query, setQuery] = useState("")
     const [isAnswering, setIsAnswering] = useState(false)
 
-    const handleQuery = () => {
+    const handleQuery = async () => {
         setIsAnswering(true)
         setQuery("")
-        AddNewMessage({ isAIGenerated: false, text: query, thinking: false })
-        AddNewMessage({ isAIGenerated: true, text: "", thinking: true })
-        streamFetch("/ehr/ask/stream", { query, patientId: patient?.patient_id }, (chunk) => updatedAnswer(chunk))
+        getStream({query, patientId:patient?.patient_id})
+        .then((id)=>{
+            AddNewMessage({ isAIGenerated: false, text: query, thinking: false, patient })
+            newStream(id, patient)
+        })
+        .catch()
         setIsAnswering(false)
     }
 

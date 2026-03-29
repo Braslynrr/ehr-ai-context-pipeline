@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
 
   ehr_postgres:
@@ -45,6 +43,12 @@ services:
     volumes:
       - ./data:/data
 
+  ehr_redis:
+    image: redis:7
+    container_name: ehr_redis
+    ports:
+      - "6379:6379"
+
   backend:
     build:
       context: .
@@ -56,6 +60,7 @@ services:
       - ehr_postgres
       - ehr_ollama
       - ehr_ingestion
+      - ehr_redis
     environment:
       - MEDICAL_LLM_PROVIDER=${MEDICAL_LLM_PROVIDER}
       - MEDICAL_LLM_MODEL=${MEDICAL_LLM_MODEL}
@@ -71,6 +76,8 @@ services:
       - DB_NAME=${DB_NAME}
       - OLLAMA_URL=${OLLAMA_URL}
       - OLLAMA_GENERATE_URL=${OLLAMA_GENERATE_URL}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
     volumes:
       - ./data:/data
 

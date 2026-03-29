@@ -15,5 +15,5 @@ class IVector(ABC):
     def search(self, query_embedding, k=2, patient_id: str | None = None) -> dict:
         pass
     @abstractmethod
-    def get_patients(self)-> list[dict]:
+    def get_patients(self, id:str | None = None)-> list[dict]:
         pass

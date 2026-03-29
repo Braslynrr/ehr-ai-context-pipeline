@@ -2,6 +2,7 @@ from typing import Optional
 
 from psycopg2.extensions import connection
 from psycopg2.extras import Json
+from ehr_ai_core.error.app_error import AppError
 from ehr_ai_core.retrieval.IVector_db import IVector
 from ehr_ai_core.retrieval.vector_entry import VectorEntry
 from ehr_ai_core.db_conection import get_db_connection
@@ -14,41 +15,63 @@ class Postgress_db(IVector):
         super().__init__()
         self.__conn = get_db_connection()
 
-    def add(self, entry: VectorEntry):
-        self.__upsert_chunk(entry)
-    
-    def add(self, entries: list[VectorEntry]):
-        for entry in entries:
-            self.__upsert_chunk(entry)
+    def add(self, entries: list[VectorEntry] | VectorEntry):
+        cursor = None
+        try:
+            cursor = self.__conn.cursor()
+
+            if isinstance(entries, list):
+                for entry in entries:
+                    self.__upsert_chunk(entry, cursor)
+            else:
+                self.__upsert_chunk(entries, cursor)
+
+            self.__conn.commit()
+
+        except Exception as e:
+            self.__conn.rollback()
+            raise AppError(f"Error inserting embeddings: {e}", 500)
+
+        finally:
+            if cursor:
+                cursor.close()
     
     def clean(self):
         cursor = self.__conn.cursor()
         cursor.execute("""DELETE FROM chunks""")
         cursor.close()
         
-    def search(self, query_embedding: list[float], k=2, patient_id: str | None = None) -> dict:
-        cursor = self.__conn.cursor()
+    def search(self, query_embedding: list[float], k=2, patient_id: str | None = None):
+        cursor = None
+        try:
+            cursor = self.__conn.cursor()
 
-        base_query = """
-            SELECT id, patient_id, type, content, date, source,
-                1 - (embedding <=> %s::vector) AS similarity
-            FROM chunks
-        """
+            base_query = """
+                SELECT id, patient_id, type, content, date, source,
+                    1 - (embedding <=> %s::vector) AS similarity
+                FROM chunks
+            """
 
-        params = [query_embedding]
+            params = [query_embedding]
 
-        if patient_id:
-            base_query += " WHERE patient_id = %s"
-            params.append(patient_id)
+            if patient_id:
+                base_query += " WHERE patient_id = %s"
+                params.append(patient_id)
 
-        base_query += " ORDER BY embedding <=> %s::vector LIMIT %s"
-        params.extend([query_embedding, k])
+            base_query += " ORDER BY embedding <=> %s::vector LIMIT %s"
+            params.extend([query_embedding, k])
 
-        cursor.execute(base_query, tuple(params))
+            cursor.execute(base_query, tuple(params))
+            results = cursor.fetchall()
 
-        results = cursor.fetchall()
-        cursor.close()
-        return [self.__map_row_to_chunk(match) for match in results]
+            return [self.__map_row_to_chunk(match) for match in results]
+
+        except Exception as e:
+            raise AppError(f"Error searching embeddings: {e}", 500)
+
+        finally:
+            if cursor:
+                cursor.close()
 
     def __upsert_chunk(self, entry: VectorEntry):
         cursor = self.__conn.cursor()
@@ -92,16 +115,20 @@ class Postgress_db(IVector):
         patient["patient_id"] = row[0]
         return patient
     
-    def get_patients(self)-> list[tuple]:
+    def get_patients(self, id:str|None = None)-> list[tuple]:
         cursor = self.__conn.cursor()
+        params = []
 
         query = """
             SELECT patient_id, content
             FROM chunks
-            WHERE type = 'demographics'
-        """
+            WHERE type = 'demographics'"""
+        
+        if id:
+            query += " and patient_id=%s"
+            params.append(id)
 
-        cursor.execute(query)
+        cursor.execute(query, tuple(params))
 
         results = cursor.fetchall()
 

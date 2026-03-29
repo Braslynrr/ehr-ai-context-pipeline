@@ -27,5 +27,12 @@ class InMemoryVectorStore(IVector):
         scored.sort(key=lambda x: x[0], reverse=True)
         return [e.payload for _, e in scored[:k]]
     
-    def get_patients(self):
-        return list(map(lambda x:x.payload["demographics"] ,self.entries))
+    def get_patients(self, id:str|None = None):
+        patients = None
+        
+        if id:
+            patients =filter(lambda x: x.payload["patient_id"] == id, self.entries)
+
+        patients = map(lambda x:x.payload["demographics"] ,self.entries)
+        
+        return list(patients)

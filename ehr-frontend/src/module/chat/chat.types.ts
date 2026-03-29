@@ -14,6 +14,8 @@ export type ChatMessage = {
     isAIGenerated:boolean
     text: string
     thinking: boolean
+    patient?: Patient
+    error?: string
 }
 
 export type ChatHistoryMessageProps = {
@@ -28,5 +30,5 @@ export type ChatInputProps = {
     History: ChatMessage[]
     AddNewMessage: (message:ChatMessage) => void
     patient?: Patient
-    updatedAnswer: (message:string) => void
+    newStream: (message:string, patient:Patient|undefined) => void
 }

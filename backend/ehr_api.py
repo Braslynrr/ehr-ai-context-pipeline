@@ -2,11 +2,13 @@ import traceback
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.concurrency import asynccontextmanager
+from fastapi.responses import JSONResponse
 from backend.api.routes import auth, ehr
 from backend.configuration import Config
 from ehr_ai_core.aiagent.agent import EHRAgent
+from ehr_ai_core.error.app_error import AppError
 from ehr_ai_core.retrieval.IVector_db import IVector
 from ehr_ai_core.retrieval.embedding import Embedder
 from ehr_ai_core.retrieval.postgress_vector_db import Postgress_db
@@ -56,6 +58,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(AppError)
+async def app_error_handler(request: Request, exc: AppError):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.message},
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: BaseException):
+    # todo: logger
+    print(exc)
+
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
 
 app.include_router(auth.router)
 app.include_router(ehr.router)

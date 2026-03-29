@@ -3,9 +3,13 @@ import type { JSX } from "react"
 import { useAuth } from "../../context/AuthContext"
 
 export default function ProtectedRoute({ children }: { children: JSX.Element }) {
-  const { isAuthenticated } = useAuth()
+  const { status } = useAuth()
 
-  if (!isAuthenticated) {
+  if (status === "loading") {
+    return <div>Loading...</div>
+  }
+
+  if (status === "unauthenticated") {
     return <Navigate to="/" replace />
   }
 

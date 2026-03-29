@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useAuth } from "../../context/AuthContext"
 import { useNavigate } from "react-router-dom"
 import { authLogin } from "../../module/auth/auth.api"
@@ -6,13 +6,20 @@ import { authLogin } from "../../module/auth/auth.api"
 
 export default function Login() {
   const [doctor, setDoctor] = useState("")
-  const { login } = useAuth()
+  const { status, login } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(
+    ()=>{
+      if(status==="authenticated")
+        navigate("/chat")
+    }
+    ,[status])
 
   async function handleLogin(e: React.SubmitEvent) {
     e.preventDefault()
     await authLogin({ doctor })
-    login()
+    login(doctor)
     navigate("/chat")
   }
 
@@ -30,7 +37,7 @@ export default function Login() {
       </p>
 
       <input
-        className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
         placeholder="Doctor name"
         value={doctor}
         onChange={(e) => setDoctor(e.currentTarget.value)}
