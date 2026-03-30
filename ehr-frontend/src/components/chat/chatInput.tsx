@@ -3,20 +3,20 @@ import type { ChatInputProps } from "../../module/chat/chat.types";
 import { getStream } from "../../module/chat/chat.api";
 
 
-export default function ChatInput({ AddNewMessage, newStream , patient }: ChatInputProps) {
+export default function ChatInput({ AddNewMessage, newStream, patient }: ChatInputProps) {
 
     const [query, setQuery] = useState("")
     const [isAnswering, setIsAnswering] = useState(false)
 
     const handleQuery = async () => {
         setIsAnswering(true)
+        getStream({ query, patientId: patient?.patient_id })
+            .then((id) => {
+                AddNewMessage({ isAIGenerated: false, text: query, thinking: false, patient })
+                newStream(id, patient)
+            })
+            .catch((err) => AddNewMessage({ isAIGenerated: false, text: query, thinking: false, patient, error: err }))
         setQuery("")
-        getStream({query, patientId:patient?.patient_id})
-        .then((id)=>{
-            AddNewMessage({ isAIGenerated: false, text: query, thinking: false, patient })
-            newStream(id, patient)
-        })
-        .catch()
         setIsAnswering(false)
     }
 
@@ -32,7 +32,7 @@ export default function ChatInput({ AddNewMessage, newStream , patient }: ChatIn
                         e.currentTarget.style.height = "auto"
                         e.currentTarget.style.height = e.currentTarget.scrollHeight + "px"
                     }}
-                    placeholder={!patient? "Ask anything": `Ask anything about ${patient.name}`}
+                    placeholder={!patient ? "Ask anything" : `Ask anything about ${patient.name}`}
                     className="flex-1 resize-none bg-transparent text-white outline-none placeholder-gray-400 max-h-40"
                 />
 

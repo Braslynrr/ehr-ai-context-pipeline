@@ -12,8 +12,11 @@ class IVector(ABC):
     def clean(self):
         pass
     @abstractmethod
-    def search(self, query_embedding, k=2, patient_id: str | None = None) -> dict:
+    def search(self, query_embedding, k=2, patient_id: str | None = None) -> list[dict]:
         pass
     @abstractmethod
-    def get_patients(self, id:str | None = None)-> list[dict]:
+    def get_patients(self, id_list:list[str] | None = None)-> list[dict]:
+        pass
+    @abstractmethod
+    def chunks_count(self, patient_id: str| None = None):
         pass

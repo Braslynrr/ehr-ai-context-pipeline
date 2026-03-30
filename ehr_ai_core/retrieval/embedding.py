@@ -8,7 +8,7 @@ import os
 class Embedder:
     ___model = ""
 
-    def __init__(self, model="nomic-embed-text"):
+    def __init__(self, model="bge-m3"):
         self.___model = model
         self.client = Client(
             host=os.getenv("OLLAMA_URL", "http://ehr_ollama:11434")

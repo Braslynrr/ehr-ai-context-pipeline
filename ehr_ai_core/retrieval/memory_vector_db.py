@@ -36,3 +36,9 @@ class InMemoryVectorStore(IVector):
         patients = map(lambda x:x.payload["demographics"] ,self.entries)
         
         return list(patients)
+    
+    def chunks_count(self, patient_id = None):
+        if patient_id:
+            fil = filter(lambda e: e.payload["patient_id"] == patient_id, self.entries)
+            return len(fil)
+        return len(self.entries)

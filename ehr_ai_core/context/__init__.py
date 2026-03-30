@@ -1,3 +1,3 @@
-from .context_builder import context_builder
+from .context_builder import context_builder, join_object
 
-__all__ = ["context_builder"]
+__all__ = ["context_builder", "join_object"]

@@ -19,6 +19,8 @@ class Config:
 
     ollama_url:str
 
+    embedding_model:str
+
 
 
     def __init__(self, max_tokens = 4000):
@@ -35,6 +37,9 @@ class Config:
 
         if self.provider == "ollama":
             self.ollama_url = _get_required_env("OLLAMA_GENERATE_URL")
+
+
+        self.embedding_model= _get_required_env("EMBEDDING_MODEL")
 
         self.JWT_ALGORITHM = _get_required_env("JWT_ALGORITHM")
         self.JWT_SECRET_KEY = _get_required_env("JWT_SECRET_KEY")

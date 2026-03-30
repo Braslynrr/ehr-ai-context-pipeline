@@ -17,7 +17,6 @@ class EHRAgent:
     def __build_prompt(self, question: str, context: str):
         return f"""
                     You are a medical assistant.
-                    Task list, order by priority:
                     - Ensure to match the question language
                     - If not in context, say you don't know
                     - Answer only using provided context
@@ -64,7 +63,7 @@ class EHRAgent:
                     "stream": True
                 },
                 stream=True,
-                timeout=30
+                timeout=60
             )
 
             response.raise_for_status()
@@ -75,7 +74,7 @@ class EHRAgent:
                         data = json.loads(line)
                         yield data.get("response", "")
                     except json.JSONDecodeError:
-                        continue  # línea corrupta, ignoras
+                        continue
 
         except requests.RequestException as e:
             raise AppError(f"Streaming request failed: {e}", 500)

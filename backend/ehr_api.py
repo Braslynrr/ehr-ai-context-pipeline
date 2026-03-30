@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     try:
         config = Config()
 
-        embedder = Embedder()
+        embedder = Embedder(config.embedding_model)
         db: IVector = Postgress_db()
 
         rag = RagService(db, embedder)

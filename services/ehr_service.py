@@ -1,5 +1,5 @@
 from ehr_ai_core.aiagent import EHRAgent
-from ehr_ai_core.context import context_builder
+from ehr_ai_core.context import context_builder, join_object
 from ehr_ai_core.redis.redis import RedisManager
 from .rag_service import RagService
 
@@ -31,19 +31,29 @@ class EHRService:
 
     def stream_answer_clinical_question(self, streamId:str, doctor:str):
         data = self.redis.get_by_id(streamId)
-        context = f"[Query owner: {doctor}]\n"
+        context = f"[User: {doctor}]\n"
 
         question = data["question"]
         patientId = data["patientId"]
 
-        if patientId:
-            patient = self.rag.get_patient(patientId)
-            context += f"Patient: {patient.get('name', 'unkwnown')}\n"
-        else:
-            context = "[General Query]"
-
         relevant_chunks = self.rag.search(question, patientId)
-        context += context_builder(relevant_chunks)
+
+        if patientId:
+            patient = self.rag.get_patients([patientId])[0]
+            context += f"Patient: {join_object(patient)}\n" 
+            context += context_builder(relevant_chunks)
+        else:
+            id_list = set(chunk["patient_id"] for chunk in relevant_chunks)
+            patients = self.rag.get_patients([id for id in id_list])
+
+            context += f"[General Query]\n\n"
+            for patient in patients:
+                context+= f"Patient: {patient['name']} ({patient['patient_id']})\n"
+                patient_chunks = filter( lambda c:c["patient_id"]==patient['patient_id'] ,relevant_chunks)
+                context += context_builder(patient_chunks)
+                context += "\n\n"
+        
+        
 
         for chunk in self.agent.Streaming_Prediction(question, context):
             yield {"chunk": chunk}

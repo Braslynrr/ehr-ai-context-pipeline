@@ -19,5 +19,5 @@ CREATE TABLE chunks (
     content JSONB,
     date DATE,
     source TEXT,
-    embedding VECTOR(768)
+    embedding VECTOR(1024)
 );.

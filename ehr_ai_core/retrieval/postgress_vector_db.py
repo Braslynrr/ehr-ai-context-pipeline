@@ -1,6 +1,6 @@
 from typing import Optional
 
-from psycopg2.extensions import connection
+from psycopg2.extensions import connection, cursor
 from psycopg2.extras import Json
 from ehr_ai_core.error.app_error import AppError
 from ehr_ai_core.retrieval.IVector_db import IVector
@@ -49,13 +49,13 @@ class Postgress_db(IVector):
             base_query = """
                 SELECT id, patient_id, type, content, date, source,
                     1 - (embedding <=> %s::vector) AS similarity
-                FROM chunks
+                FROM chunks 
             """
 
             params = [query_embedding]
 
             if patient_id:
-                base_query += " WHERE patient_id = %s"
+                base_query += "WHERE patient_id = %s"
                 params.append(patient_id)
 
             base_query += " ORDER BY embedding <=> %s::vector LIMIT %s"
@@ -73,9 +73,7 @@ class Postgress_db(IVector):
             if cursor:
                 cursor.close()
 
-    def __upsert_chunk(self, entry: VectorEntry):
-        cursor = self.__conn.cursor()
-
+    def __upsert_chunk(self, entry: VectorEntry, cursor:cursor):
         cursor.execute("""
         INSERT INTO chunks (id, patient_id, type, content, date, source, embedding)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -98,7 +96,6 @@ class Postgress_db(IVector):
         ))
 
         self.__conn.commit()
-        cursor.close()
 
     def __map_row_to_chunk(self, row):
         return {
@@ -108,14 +105,15 @@ class Postgress_db(IVector):
             "content": row[3],
             "date": row[4],
             "source": row[5],
+            "similarity": row[6]
         }
     
-    def _map_patient_to_chunk(self, row):
+    def _map_patient_to_chunk(self, row) -> dict:
         patient = row[1]
         patient["patient_id"] = row[0]
         return patient
     
-    def get_patients(self, id:str|None = None)-> list[tuple]:
+    def get_patients(self, id_list:list[str] | None = None)-> list[dict]:
         cursor = self.__conn.cursor()
         params = []
 
@@ -124,12 +122,32 @@ class Postgress_db(IVector):
             FROM chunks
             WHERE type = 'demographics'"""
         
-        if id:
-            query += " and patient_id=%s"
-            params.append(id)
+        if id_list and len(id_list) > 0:
+            placeholders = ','.join(['%s'] * len(id_list))
+            query += f"and patient_id IN ({placeholders})"
+            params.extend(id_list)
 
         cursor.execute(query, tuple(params))
 
         results = cursor.fetchall()
 
         return [self._map_patient_to_chunk(patient) for patient in results]
+    
+    def chunks_count(self, patient_id = None):
+        cursor = self.__conn.cursor()
+        params = []
+
+        query = """
+            SELECT count(id)
+            FROM chunks
+            """
+        
+        if patient_id:
+            query += "WHERE patient_id = %s"
+            params.append(patient_id)
+
+        cursor.execute(query, tuple(params))
+
+        results = cursor.fetchone()
+
+        return results[0]

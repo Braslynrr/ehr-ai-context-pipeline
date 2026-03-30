@@ -9,8 +9,11 @@ def test_rag_search(mocker):
     fake_embedder = mocker.Mock()
     fake_embedder.embed.return_value = [0.216534]
 
+    fake_reranker = mocker.Mock()
+    fake_reranker.predict.return_value = []
+
     db = InMemoryVectorStore()
-    rag = RagService(db, fake_embedder)
+    rag = RagService(db, fake_embedder, fake_reranker)
 
     result = rag.search("glucose")
 
@@ -20,7 +23,7 @@ def test_rag_search(mocker):
 def test_rag_ingestion(mock_embeddings, tmp_path, ehr_data_normalized):
 
     mock_embeddings.return_value = {
-        "embedding": [0.1] * 768
+        "embedding": [0.1] * 1024
     }
 
     embbeder = Embedder()
