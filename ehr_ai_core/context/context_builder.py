@@ -1,6 +1,7 @@
 from os import linesep
+from typing import Iterable
 
-def context_builder(chunks , max_chars=3000):
+def context_builder(chunks:Iterable[dict] , max_chars=3000):
     parts = []
     total = 0
     
@@ -15,7 +16,9 @@ def context_builder(chunks , max_chars=3000):
         else:
             content = original_content
 
-        block = f"[type: {c['type']}, source: {c['source']} patient: {c['patient_id']}] {linesep}{content}{linesep}"
+        date_block =  f"- Date:{c.get('date', 'unknown')}{linesep}" if c.get("date", None) else ""
+
+        block = f"{c['type']}: {linesep}{date_block}{content}{linesep}Source:{c['source']}{linesep}"
         if total + len(block) > max_chars:
             break
         parts.append(block)
@@ -28,7 +31,7 @@ def join_object(obj):
         content = f"{linesep}"
         for key,val in obj.items():
             val_content = join_object(val)
-            content += f"{key}: {val_content}{linesep}"
+            content += f"-{key}: {val_content}{linesep}"
         return content
     elif isinstance(obj, list):
         return ", ".join(join_object(item) for item in obj)

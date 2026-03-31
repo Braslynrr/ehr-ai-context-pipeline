@@ -26,8 +26,15 @@ export async function apiClient<T>(
   })
 
   if (!response.ok) {
-    const text = await response.text()
-    throw new Error(text || "Request failed")
+    const contentType = response.headers.get("content-type")
+    let data = undefined
+    if (contentType?.includes("application/json")) {
+      data = await response.json()
+    } else {
+      data = await response.text()
+    }
+
+    throw data
   }
 
   if (response.status === 204) {

@@ -1,21 +1,28 @@
 import { useState } from "react";
 import type { ChatInputProps } from "../../module/chat/chat.types";
 import { getStream } from "../../module/chat/chat.api";
+import type { generalError } from "../../error/error.type";
 
 
-export default function ChatInput({ AddNewMessage, newStream, patient }: ChatInputProps) {
+export default function ChatInput({ AddNewMessage, newStream, patient, onError }: ChatInputProps) {
 
     const [query, setQuery] = useState("")
     const [isAnswering, setIsAnswering] = useState(false)
 
     const handleQuery = async () => {
         setIsAnswering(true)
+        AddNewMessage({ isAIGenerated: false, text: query, thinking: false, patient })
         getStream({ query, patientId: patient?.patient_id })
             .then((id) => {
-                AddNewMessage({ isAIGenerated: false, text: query, thinking: false, patient })
                 newStream(id, patient)
             })
-            .catch((err) => AddNewMessage({ isAIGenerated: false, text: query, thinking: false, patient, error: err }))
+            .catch((err:generalError) => {
+                const message =
+                    err.detail
+                    "Unknown error";
+
+                onError(message);
+            })
         setQuery("")
         setIsAnswering(false)
     }

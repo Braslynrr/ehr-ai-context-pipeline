@@ -31,4 +31,5 @@ export type ChatInputProps = {
     AddNewMessage: (message:ChatMessage) => void
     patient?: Patient
     newStream: (message:string, patient:Patient|undefined) => void
+    onError: (error:string) => void
 }

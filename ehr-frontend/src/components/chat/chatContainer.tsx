@@ -20,7 +20,7 @@ export default function ChatContainer({ patient }: ChatContainerProps) {
         setHistory(prev => {
             if (prev.length === 0) return prev
             const lastIndex = prev.length - 2
-
+            
             return [
                 ...prev.slice(0, lastIndex),
                 {
@@ -46,6 +46,22 @@ export default function ChatContainer({ patient }: ChatContainerProps) {
 
         flush()
         buffer = ""
+    }
+
+    function onErrorMessage(error:string)
+    {
+         setHistory(prev => {
+            if (prev.length === 0) return prev
+            const lastIndex = prev.length - 1
+
+            return [
+                ...prev.slice(0, lastIndex),
+                {
+                    ...prev[lastIndex],
+                    error: error
+                }
+            ]
+        })
     }
 
     function flush() {
@@ -76,6 +92,7 @@ export default function ChatContainer({ patient }: ChatContainerProps) {
             <ChatInput
                 patient={patient}
                 History={history}
+                onError={onErrorMessage}
                 newStream={onNewStream} AddNewMessage={(message) => setHistory((prev) => [...prev, message])} />
         </div>
     </div>

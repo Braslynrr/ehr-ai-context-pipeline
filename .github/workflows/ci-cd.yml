@@ -1,0 +1,43 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          echo "MEDICAL_LLM_PROVIDER=${{ secrets.MEDICAL_LLM_PROVIDER }}" >> .env
+          echo "MEDICAL_LLM_MODEL=${{ secrets.MEDICAL_LLM_MODEL }}" >> .env
+          echo "EMBEDDING_MODEL=${{ secrets.EMBEDDING_MODEL }}" >> .env
+          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env
+          echo "JWT_ALGORITHM=${{ secrets.JWT_ALGORITHM }}" >> .env
+          echo "SAME_SITE=${{ secrets.SAME_SITE }}" >> .env
+          echo "CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "OLLAMA_URL=${{ secrets.OLLAMA_URL }}" >> .env
+          echo "OLLAMA_GENERATE_URL=${{ secrets.OLLAMA_GENERATE_URL }}" >> .env
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
+          echo "VITE_EHR_API_URL=${{ secrets.VITE_EHR_API_URL }}" >> .env
+
+      - name: Build containers
+        run: docker compose build
+
+      - name: Run containers
+        run: docker compose up -d
+
+      - name: Verify containers are running
+        run: docker ps

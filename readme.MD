@@ -1,6 +1,7 @@
 # EHR AI Assistant – Context Engineering Pipeline
 
-[![CI](https://github.com/Braslynrr/ehr-ai-context-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/Braslynrr/ehr-ai-context-pipeline/actions/workflows/ci.yml)
+[![ci-cd](https://github.com/Braslynrr/ehr-ai-context-pipeline/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Braslynrr/ehr-ai-context-pipeline/actions/workflows/ci-cd.yml)
+[![test](https://github.com/Braslynrr/ehr-ai-context-pipeline/actions/workflows/test.yml/badge.svg)](https://github.com/Braslynrr/ehr-ai-context-pipeline/actions/workflows/test.yml)
 
 ## Overview
 
