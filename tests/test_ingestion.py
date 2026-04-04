@@ -14,8 +14,8 @@ def test_load_ehr_success(tmp_path, ehr_minimal_data):
 
     result = load_ehr(str(file_path))
 
-    assert result["patient_id"] == "P001"
-    assert result["demographics"]["name"] == "Test"
+    assert result["patient_id"] == "p001"
+    assert result["demographics"]["name"] == "test"
     assert result["medical_history"]["allergies"][0] == "test"
     assert result["recent_visits"][0]["date"] == "2024-08-20"
     assert result["lab_results"][0]["date"] == "2024-10-10"

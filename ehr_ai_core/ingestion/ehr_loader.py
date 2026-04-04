@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+import unicodedata
 
 REQUIRED_SECTIONS = ["patient_id", "demographics" ,"medical_history", "recent_visits", "lab_results"]
 
@@ -8,6 +9,7 @@ def load_ehr(path:str, enconding:str = "utf-8") -> dict:
     jsonfile = json.load(file)
     _validate_structure(jsonfile)
     _normalize_ehr(jsonfile)
+    jsonfile = _normalize_any(jsonfile)
     return jsonfile
 
 def _validate_structure(ehr:dict):
@@ -16,8 +18,29 @@ def _validate_structure(ehr:dict):
         if section not in ehr:
             missing_sections.append(section)
     if len(missing_sections) > 0:
-        raise ValueError(f"The ehr needs the following sections to be acceptable: [{''.join(missing_sections)}]")
+        raise ValueError(f"The ehr needs the following sections to be acceptable: [{', '.join(missing_sections)}]")
     
+
+def _normalize_any(data):
+    if isinstance(data, dict):
+        return {
+            _normalizing_text(k): _normalize_any(v)
+            for k, v in data.items()
+        }
+    elif isinstance(data, list):
+        return [_normalize_any(x) for x in data]
+    elif isinstance(data, str):
+        return _normalizing_text(data)
+    else:
+        return data
+    
+    
+
+def _normalizing_text(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text)
+    no_accents = "".join(c for c in normalized if not unicodedata.combining(c))
+    return no_accents.lower()
+
 
 def _normalize_ehr(ehr:dict):
     

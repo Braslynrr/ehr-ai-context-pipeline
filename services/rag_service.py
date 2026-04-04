@@ -2,6 +2,7 @@ import numpy as np
 
 from ehr_ai_core.context.context_builder import join_object
 from ehr_ai_core.ingestion import load_ehr
+from ehr_ai_core.ingestion.ehr_loader import _normalizing_text
 from ehr_ai_core.retrieval import Embedder, enrich_text_from_list
 from ehr_ai_core.chunkers import ehr_json_chunkifier
 from ehr_ai_core.retrieval.IVector_db import IVector
@@ -54,7 +55,10 @@ class RagService:
         return (arr - arr.min()) / (arr.max() - arr.min() + 1e-8)
 
     def search(self, query: str, patientId: str | None = None):
-        embedded_question = self.__embedder.embed(query.lower())
+
+        normalized_query = _normalizing_text(query)
+
+        embedded_question = self.__embedder.embed(normalized_query)
 
         chunks_count = self.__vectordb.chunks_count(patient_id=patientId)
 
@@ -83,7 +87,7 @@ class RagService:
             rerank_scores = (rerank_scores - rerank_scores.min()) / (rerank_scores.max() - rerank_scores.min() + 1e-8)
 
             for i, doc in enumerate(reranked_docs):
-                doc["final_score"] = 0.4 * sim_scores[i] + 0.6 * rerank_scores[i]
+                doc["final_score"] = 0.5 * sim_scores[i] + 0.5 * rerank_scores[i]
 
             reranked_docs.sort(key=lambda doc: doc["final_score"], reverse=True)
 

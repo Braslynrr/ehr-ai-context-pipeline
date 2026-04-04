@@ -1,2 +1,2 @@
-from .ehr_loader import load_ehr
-__all__ = ["load_ehr"]
+from .ehr_loader import load_ehr, _normalizing_text
+__all__ = ["load_ehr", "_normalizing_text"]

@@ -1,19 +1,19 @@
 SEMANTIC_HINTS = {
     "current_medications": {
-        "es": "medicación actual del paciente, fármacos en uso",
-        "en": "current medications, drugs patient is taking"
+        "es": "medicacion farmacos medicinas",
+        "en": "medications drugs medicine"
     },
     "allergies": {
-        "es": "alergias conocidas del paciente",
-        "en": "known allergies"
+        "es": "alergias",
+        "en": "allergies"
     },
     "lab_result": {
-        "es": "resultados de laboratorio, análisis clínicos",
+        "es": "resultados de laboratorio, analisis clinicos",
         "en": "laboratory results"
     },
     "demographics": {
-        "es": "informacion demografica del paciente",
-        "en": "patient demographic information"
+        "es": "informacion demografica edad nombre sangre pacient genero general",
+        "en": "patient demographic information age name blood gender general"
     },
     "chronic_conditions": {
         "es": "condiciones cronicas, padecimientos , enfermedades",
