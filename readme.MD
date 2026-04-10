@@ -5,13 +5,18 @@
 
 ## Overview
 
-This project implements a context engineering pipeline that enables an AI agent to assist clinicians during medical consultations.
-The system ingests Electronic Health Records (EHR), structures the information into contextual chunks, retrieves relevant data based on a clinician’s query, and generates grounded, traceable answers using a Large Language Model (LLM).
+This project implements an end-to-end AI-powered clinical assistant built on a context engineering pipeline.
 
-This system is intentionally designed as a single-user, on-demand assistant. It does not aim to support concurrent users or large-scale request handling.
-EHR ingestion is triggered by user interaction and replaces the in-memory context when a different patient is selected.
+It evolved from a simple RAG prototype into a modular, containerized system with:
 
-The focus of this implementation is clarity, traceability, and end-to-end functionality, rather than production-level optimization.
+- Retrieval-Augmented Generation (RAG)
+- Streaming responses (Server-Sent Events)
+- Persistent vector storage (PostgreSQL + pgvector)
+- Redis-based orchestration for streaming
+- Local LLM inference using Ollama
+- React frontend for real-time interaction
+
+The system is designed for clarity, traceability, and incremental evolution toward agent-like behavior.
 
 ## System Goals
 
@@ -25,47 +30,30 @@ The focus of this implementation is clarity, traceability, and end-to-end functi
 
 ## High-Level Architecture
 
-        EHR JSON
-           │
-           ▼
-        [ Ingestion ]
-           │
-           ▼
-        [ Chunking ]
-           │
-           ▼
-        [ Context Enrichment ]
-           │
-           ▼
-        [ Embedding ]
-           │
-           ▼
-        [ In-Memory Vector Store ]
-           │
-           ▼
-        [ Retrieval ]
-           │
-           ▼
-        [ Context Builder ]
-           │
-           ▼
-        [ LLM Agent ]
-           │
-           ▼
-        Answer + Sources
+        React Frontend
+               │
+               ▼
+        FastAPI Backend
+               │
+       ┌───────┼────────┐
+       ▼       ▼        ▼
+   Redis     Postgres   Ollama
+ (actions)  (pgvector)   (LLM)
 
-## UML Diagram
 
-The following UML diagram illustrates the high-level relationships between
-core modules in the system.
+## Infrastructure
 
-It emphasizes:
+The system is fully containerized using Docker Compose.
 
-- Clear module boundaries
-- Dependency direction
-- Separation between configuration, services, and agents
+Services:
 
-![System UML Diagram](docs/UML/system_architecture.png)
+- `ehr_frontend` → React + Vite
+- `ehr_backend` → FastAPI API layer
+- `ehr_postgres` → PostgreSQL with pgvector
+- `ehr_ollama` → Local LLM inference
+- `ehr_redis` → Streaming coordination
+
+This allows reproducible local environments and simplifies deployment.
 
 
 ## Core Components
@@ -183,23 +171,17 @@ For example, the section type `recent_visit` is enriched using:
 }
 ```
 
-### 4. Embeddings & Vector Store
+### 4. Embeddings & Retrieval
 
-A single embedding per chunk is generated
+- Embeddings are generated using Ollama (`bge-m3`)
+- Stored in PostgreSQL using pgvector
+- Retrieval is performed via vector similarity search
 
-Embeddings are stored in an in-memory vector store
+#### 4.1 Reranking
 
-Design decision:
+A lightweight reranking step has been introduced to improve relevance after retrieval.
 
-* Use of Ollama embeddings due to the absence of valid API keys
-
-* No complex embedding hierarchies
-
-* No reranking or cross-encoders
-
-* Use of an in-memory vector store, as the system operates on a single patient at a time and embeddings are loaded on-demand per user selection.
-
-This keeps retrieval transparent and easy to debug
+This enhances answer quality without introducing heavy cross-encoder dependencies.
 
 ### 5. Retrieval
 
@@ -207,11 +189,11 @@ At query time:
 
 * The question is embedded
 
-* Relevant chunks are retrieved via similarity search
+* Relevant chunks are retrieved via similarity search and re-ranking
 
 Design decision:
 
-The retriever currently returns a fixed number of chunks (k=2).
+The retriever currently returns a dynamic number based on the amount of available chunks.
 
 This was chosen intentionally:
 - It reduces noise in the LLM context
@@ -261,19 +243,36 @@ The system supports:
 
 ### 8. API Layer
 
-The system exposes a minimal HTTP API using Flask.
+The system exposes a minimal HTTP API using Fast Api.
 
-Design decision:
 
-* Flask was selected because it is lightweight, easy to reason about, and sufficient
-  for demonstrating the end-to-end RAG workflow.
+### 9. Frontend
 
-* The API layer is intentionally thin and does not implement advanced concerns
-  such as authentication, concurrency control, or request orchestration.
+The React frontend provides:
 
-* In a production setting, alternative frameworks (e.g., FastAPI, Django, or
-  dedicated inference gateways) would be evaluated based on scalability,
-  observability, and deployment requirements.
+- Real-time chat interface
+- Streaming responses
+- Error handling and state management
+- Patient-based context interaction
+
+Built with:
+
+- React
+- Vite
+- TailwindCSS
+
+## 10. Streaming Responses
+
+The system supports real-time streaming of LLM responses using Server-Sent Events (SSE).
+
+Flow:
+
+1. Client sends query → `/ask`
+2. Backend stores request in Redis
+3. Client connects via SSE → `/ask/stream/{id}`
+4. Backend streams LLM tokens progressively
+
+This improves perceived performance and user experience.
 
 
 ## Grounding & Traceability
@@ -305,6 +304,19 @@ or mocked to preserve reproducibility.
 
 The goal of testing is correctness and robustness, not model quality.
 
+
+## GitHub Actions
+
+### CI/CD
+
+GitHub Actions is used for:
+
+- Running unit tests
+- Building Docker images
+- Injecting environment variables dynamically
+
+The `.env` file is not committed and is instead generated during the CI pipeline.
+
 ## EHR Data Format
 
 This project expects EHR files to follow a predefined JSON structure.
@@ -315,31 +327,34 @@ The schema is intentionally simple and designed for demonstration purposes.
 
 ## Configuration
 
-The system is partially configurable via environment variables using a `.env` file.
-This allows changing the LLM provider, model, and EHR data source without modifying
-application code, while keeping some parameters (e.g., embedding model and retrieval
-top-k) fixed for simplicity.
-
-Create a `.env` file in the project root directory (same level as `pyproject.toml`)
-to configure the application.
-
-
-### Environment Variables
-
-| Variable | Description |
-|--------|-------------|
-| MEDICAL_EHR_LOCATION | Path to the directory containing EHR JSON files |
-| MEDICAL_LLM_PROVIDER | LLM provider (`ollama`, `openai`, `gemini`, etc.) |
-| MEDICAL_LLM_MODEL | Model name for the selected provider |
-| OPENAI_API_KEY | Required when using OpenAI |
-| GOOGLE_API_KEY | Required when using Google Gemini |
+Environment variables are required for service communication.
 
 ### Example `.env`
 
 ```env
-MEDICAL_EHR_LOCATION=E:\EHR-AI\data
+MEDICAL_EHR_LOCATION=%projectDir%\data
 MEDICAL_LLM_PROVIDER=ollama
-MEDICAL_LLM_MODEL=qwen3:4b
+MEDICAL_LLM_MODEL=llama3
+EMBEDDING_MODEL=bge-m3
+JWT_SECRET_KEY=<your secret key>
+JWT_ALGORITHM=HS256
+
+SAME_SITE=lax
+CORS_ORIGIN=http://localhost:5173
+
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=ehr_user
+DB_PASSWORD=ehr_password
+DB_NAME=ehr_db
+
+OLLAMA_URL=http://localhost:11434
+OLLAMA_GENERATE_URL=http://localhost:11434/api/generate
+
+VITE_EHR_API_URL=http://localhost:8000/api
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
 ```
 
 ### Switching Providers Example
@@ -352,97 +367,43 @@ MEDICAL_LLM_MODEL=gemini-1.5-flash
 GOOGLE_API_KEY=your_api_key_here
 ```
 
-
 ## Running the Project
-### Prerequisites
 
-- Python 3.10+
-- Ollama installed locally ([official download page](https://ollama.com/download))
-- The following Ollama models pulled locally:
-  - `qwen3:4b` (LLM for answering questions)
-  - `nomic-embed-text` (embedding model for retrieval)
+### Start the System
+   docker compose up --build
 
-Note: `qwen3:4b` can be replaced by any other Ollama-supported model.
-It was selected because it is relatively small while still producing
-high-quality answers when paired with an effective RAG pipeline.
+This will start:
 
-## Setup
+* Backend (FastAPI)
+* Frontend (React)
+* PostgreSQL (pgvector)
+* Redis
+* Ollama
 
-It is recommended to run the project inside a virtual environment to
-isolate dependencies and avoid conflicts with other Python projects.
+### Access the Application
+- Frontend → http://localhost:5173
+- Backend API → http://localhost:8000
 
-### 1. Create a virtual environment
+### First Run Notes
+Ollama will automatically download required models if not present
+Initial startup may take longer due to model loading
 
-```bash
-python -m venv venv
-```
+### Stop the System
+   docker compose down
 
-### 2. Activate the virtual environment
+## ⚠️ Alternative: Manual Setup (Advanced)
 
-#### Windows
+This project can be run without Docker, but requires manual setup of:
 
-```bash
-# In cmd.exe
-venv\Scripts\activate.bat
-# In PowerShell
-venv\Scripts\Activate.ps1
-```
+- Python environment
+- PostgreSQL + pgvector
+- Redis
+- Ollama
 
-#### macOS / Linux
-
-```bash
-source venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
+This approach is not recommended unless you need full control over each service.
 
 
-### 4. Pull Required Ollama Models
-
-Ensure the required models are available locally:
-
-```bash
-ollama pull qwen3:4b
-ollama pull nomic-embed-text
-```
-
-You can verify available models with:
-
-```bash
-ollama list
-```
-
-## 5. Start Ollama
-
-Make sure the Ollama service is running:
-
-```bash
-ollama run qwen3:4b
-```
-
-### 6. Run the Application
-
-In a separate terminal, run the application:
-
-```bash
-python main.py
-```
-
-## 7. Quick Sanity Check
-
-Once the application is running, you should see:
-
-- Flask server running on `http://127.0.0.1:5000`
-- No errors related to missing models or environment variables
-
-You can verify the API by sending a test request to `/ask`.
-
-
-### 8. API Request Example
+### API Request Example
 
 POST /ask
 
@@ -469,33 +430,20 @@ Notes:
 ## Trade-offs & Limitations
 
 - The provided EHR data is fully synthetic and written in Spanish to avoid the use of real patient information.
-- As a result, example queries and responses perform best in Spanish, which is the language of the source records.
-- English queries are supported by the pipeline but may retrieve slightly less relevant context due to cross-lingual embedding limitations.
 - Design for demo purposes
 - Interfaces and abstractions were intentionally minimized, as they were not required for the core functionality.
 - No large architectural patterns (e.g., repositories, ports/adapters) were introduced to avoid unnecessary complexity.
-- The system is designed for single-user interaction and does not handle concurrent sessions.
-- EHR ingestion is performed on demand and replaces the current in-memory state.
-- Vector store is in-memory (non-persistent)
-- No advanced reranking or hybrid search
 - Different LLM providers may produce slightly different answers due to model behavior, even when using the same context.
-- CI runs unit tests only. End-to-end execution requires a local Ollama setup.
+- CI runs unit tests only and docker compose, however it won't be deployed.
 
 ## Future Improvements
 
-* Persistent vector database
-
-* Reranking with cross-encoders
-
-* Query rewriting for complex questions
-
-* Global retrieval queries
-
-* More configurable options (Embeddings)
-
-* Access control
-
-* Audit logging
+- Agent-like behavior (multi-step reasoning)
+- Tool usage (EHR updates, structured queries)
+- Query planning and decomposition
+- Memory and session persistence
+- Advanced reranking strategies
+- Audit logging
 
 ## Conclusion
 
