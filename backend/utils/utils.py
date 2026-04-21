@@ -5,8 +5,11 @@ from fastapi import Depends, HTTPException, Request
 from jose import jwt, JWTError
 
 from backend.configuration.configuration import Config
+from services.agent import EHRAgent
 from services.ehr_service import EHRService
 
+def get_agent(request: Request) -> EHRAgent:
+    return request.app.state.agent
 
 def get_medical_service(request: Request) -> EHRService:
     return request.app.state.medical_service
@@ -31,4 +34,7 @@ def verify_token(request: Request, config: Annotated[Config, Depends(get_config)
         return payload
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
+
+def pending_action(request: Request):
+    action_id = request.cookies.get("pending_action_id")
+    return action_id 

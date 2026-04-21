@@ -109,8 +109,12 @@ class Postgress_db(IVector):
         }
     
     def _map_patient_to_chunk(self, row) -> dict:
-        patient = row[1]
+        patient = {}
         patient["patient_id"] = row[0]
+        patient["name"] = row[1]
+        patient["age"] = row[2]
+        patient["gender"] = row[3]
+        patient["blood_type"] = row[4]
         return patient
     
     def get_patients(self, id_list:list[str] | None = None)-> list[dict]:
@@ -118,13 +122,12 @@ class Postgress_db(IVector):
         params = []
 
         query = """
-            SELECT patient_id, content
-            FROM chunks
-            WHERE type = 'demographics'"""
+            SELECT id, name, age, gender, blood_type
+            FROM patients"""
         
         if id_list and len(id_list) > 0:
             placeholders = ','.join(['%s'] * len(id_list))
-            query += f"and patient_id IN ({placeholders})"
+            query += f" where id IN ({placeholders})"
             params.extend(id_list)
 
         cursor.execute(query, tuple(params))
@@ -151,3 +154,53 @@ class Postgress_db(IVector):
         results = cursor.fetchone()
 
         return results[0]
+    
+    def add_patient(self, patient:dict):
+        cursor = None
+        try:
+            cursor = self.__conn.cursor()
+            self.__upsert_patient(patient=patient, cursor=cursor)
+        except Exception as e:
+            self.__conn.rollback()
+            raise AppError(f"Error inserting embeddings: {e}", 500)
+
+        finally:
+            if cursor:
+                cursor.close()
+
+    def __upsert_patient(self, patient:dict, cursor:cursor):
+        cursor.execute("""
+        INSERT INTO patients (id, name, blood_type, gender, age)
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (id)
+        DO UPDATE SET
+            name = COALESCE(EXCLUDED.name, patients.name),
+            blood_type = COALESCE(EXCLUDED.blood_type, patients.blood_type),
+            gender = COALESCE(EXCLUDED.gender, patients.gender),
+            age = COALESCE(EXCLUDED.age, patients.age)
+        """, (
+            patient["id"],
+            patient.get("name"),
+            patient.get("blood_type"),
+            patient.get("gender"),
+            patient.get("age")
+        ))
+
+    def patient_chunks(self, patient):
+        cursor = self.__conn.cursor()
+
+        cursor.execute("""
+        Select type, content, date, source from chunks where patient_id = %s
+        """, (patient,))
+        
+        results = cursor.fetchall()
+
+        return [self.__map_patient_chunk(row=row) for row in results]
+
+    def __map_patient_chunk(self, row):
+        return {
+            "type": row[0],
+            "content": row[1],
+            "date": row[2],
+            "source": row[3]
+        }

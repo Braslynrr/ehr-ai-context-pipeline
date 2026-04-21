@@ -34,6 +34,6 @@ def join_object(obj):
             content += f"-{key}: {val_content}{linesep}"
         return content
     elif isinstance(obj, list):
-        return ", ".join(join_object(item) for item in obj)
+        return f"[{ ', '.join(join_object(item) for item in obj)} ]"
     else:
         return str(obj)

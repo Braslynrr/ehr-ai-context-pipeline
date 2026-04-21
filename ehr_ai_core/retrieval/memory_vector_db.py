@@ -42,3 +42,11 @@ class InMemoryVectorStore(IVector):
             fil = filter(lambda e: e.payload["patient_id"] == patient_id, self.entries)
             return len(fil)
         return len(self.entries)
+    
+    def add_patient(self, patient):
+        return super().add_patient(patient)
+    
+    def patient_chunks(self, patient):
+        if id:
+            patients = filter(lambda x: x.payload["patient_id"] == patient, self.entries)
+        return patients

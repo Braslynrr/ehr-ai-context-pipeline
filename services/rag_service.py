@@ -34,12 +34,40 @@ class RagService:
         # chunking ehr
         patient_id = file["patient_id"]
         chunks = ehr_json_chunkifier(file)
+        demograph:dict 
+        #include patient
+        for i, c in enumerate(chunks):
+            if c["type"] == "demographics":
+                demograph = chunks.pop(i)
+                break
+
+        self.__vectordb.add_patient(demograph["content"] | { 'id': patient_id})
+
 
         for i in range(len(chunks)):
             chunks[i]["patient_id"] = patient_id
             chunks[i]["chunk_id"] = f"{patient_id}-{i}"
 
         self.__index_chunks(chunks)
+
+
+    def json_ingestion(self, chunks:dict, patientId:str|None):
+        demograph:dict 
+        #include patient
+        for i, c in enumerate(chunks):
+            if c["type"] == "demographics":
+                demograph = chunks.pop(i)
+                break
+
+        self.__vectordb.add_patient(demograph["content"] | { 'id': patientId })
+
+
+        for i in range(len(chunks)):
+            chunks[i]["patient_id"] = patientId
+            chunks[i]["chunk_id"] = f"{patientId}-{i}"
+
+        self.__index_chunks(chunks)
+
 
     def __index_chunks(self, chunks:list):
         # semeantic enrichment
@@ -49,6 +77,7 @@ class RagService:
 
         # adding embedding to the DB
         self.__vectordb.add(embedded_chunks)
+
     
     def normalize(arr):
         arr = np.array(arr)
@@ -102,3 +131,6 @@ class RagService:
     
     def chunks_count(self, patient_id: str|None = None):
         return self.__vectordb.chunks_count(patient_id=patient_id)
+    
+    def get_patient_chunks(self, id:str):
+        return self.__vectordb.patient_chunks(id)

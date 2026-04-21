@@ -20,3 +20,8 @@ class IVector(ABC):
     @abstractmethod
     def chunks_count(self, patient_id: str| None = None):
         pass
+    @abstractmethod
+    def add_patient(self, patient:dict):
+        pass
+    def patient_chunks(self, patient:str) -> list:
+        pass

@@ -2,19 +2,15 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE patients (
     id TEXT PRIMARY KEY,
-    name TEXT
-);
-
-CREATE TABLE ehr_documents (
-    id SERIAL PRIMARY KEY,
-    patient_id TEXT REFERENCES patients(id),
-    raw_json JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    name TEXT,
+    blood_type TEXT,
+    gender TEXT,
+    age INTEGER
 );
 
 CREATE TABLE chunks (
     id TEXT PRIMARY KEY,
-    patient_id TEXT,
+    patient_id TEXT REFERENCES patients(id),
     type TEXT,
     content JSONB,
     date DATE,

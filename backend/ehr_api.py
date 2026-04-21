@@ -7,7 +7,8 @@ from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import JSONResponse
 from backend.api.routes import auth, ehr
 from backend.configuration import Config
-from ehr_ai_core.aiagent.agent import EHRAgent
+from ehr_ai_core.redis.redis import RedisManager
+from services.agent import EHRAgent
 from ehr_ai_core.error.app_error import AppError
 from ehr_ai_core.retrieval.IVector_db import IVector
 from ehr_ai_core.retrieval.embedding import Embedder
@@ -16,22 +17,40 @@ from services.ehr_service import EHRService
 from services.rag_service import RagService
 from fastapi.middleware.cors import CORSMiddleware
 from ehr_ai_core.ollama.ensure_ollama import ensure_Ollama
+from services.tools.ehr_json_ingestion import ehr_json_ingestion
+from services.tools.ehr_db_loader import ehr_db_loader
+from services.tools.ehr_redis_get import ehr_redis_get
+from services.tools.ehr_redis_save import ehr_redis_save
+from services.tools.ehr_retriever import ehr_retriever
+from services.tools.ehr_patients import ehr_patient
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
+        ensure_Ollama()
+
         config = Config()
 
         embedder = Embedder(config.embedding_model)
         db: IVector = Postgress_db()
-
+        redis = RedisManager()
         rag = RagService(db, embedder)
         agent = EHRAgent(config.provider,config.model, config.max_tokens, config.ollama_url)
 
-        medical_service = EHRService(rag, agent)
+        medical_service = EHRService(rag=rag, redis=redis)
+
+        agent.add_tool(ehr_retriever(medical_service))
+        agent.add_tool(ehr_patient(medical_service))
+        agent.add_tool(ehr_db_loader(rag))
+        agent.add_tool(ehr_json_ingestion(rag))
+        agent.add_tool(ehr_redis_save(redis))
+        agent.add_tool(ehr_redis_get(redis))
+
 
         app.state.medical_service = medical_service
+        app.state.agent = agent
         app.state.config = config
+
 
         print("[STARTUP] Application initialized")
 
@@ -45,9 +64,7 @@ async def lifespan(app: FastAPI):
     finally:
         print("[SHUTDOWN] Cleaning up resources")
 
-
 load_dotenv()
-ensure_Ollama()
 
 app = FastAPI(lifespan=lifespan)
 

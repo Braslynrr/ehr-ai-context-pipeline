@@ -16,44 +16,63 @@ export default function ChatContainer({ patient }: ChatContainerProps) {
     }
 
     function onErrorChatMessage({ error }: { error: string }) {
-
         setHistory(prev => {
-            if (prev.length === 0) return prev
-            const lastIndex = prev.length - 2
-            
-            return [
-                ...prev.slice(0, lastIndex),
-                {
-                    ...prev[lastIndex],
-                    error: error
-                }
-            ]
+            if (prev.length < 2) return prev
+
+            const userIndex = prev.length - 2
+            const aiIndex = prev.length - 1
+
+            const newHistory = prev.slice(0, aiIndex)
+
+            newHistory[userIndex] = {
+                ...newHistory[userIndex],
+                error
+            }
+
+            return newHistory
         })
-
     }
-
+    
     let buffer = ""
 
-    function updateLastChatMessage({ chunk }: { chunk: string }) {
+    function updateLastChatMessage({ chunk, thinking }: { chunk: string, thinking?: boolean }) {
 
-        if (chunk !== "[DONE]") {
+        if (chunk !== "[DONE]" && !thinking) {
             buffer += chunk
 
             if (buffer.length > 20) {
                 flush()
             }
-        }
 
-        flush()
-        buffer = ""
+        } else if (thinking) {
+
+            setHistory(prev => {
+                if (prev.length === 0) return prev
+                const lastIndex = prev.length - 1
+
+                return [
+                    ...prev.slice(0, lastIndex),
+                    {
+                        ...prev[lastIndex],
+                        thinking: true,
+                        thinkingContext: chunk
+                    }
+                ]
+            })
+
+        } else {
+            flush()
+            buffer = ""
+        }
     }
 
-    function onErrorMessage(error:string)
-    {
-         setHistory(prev => {
+    function onErrorMessage(error: string) {
+        setHistory(prev => {
             if (prev.length === 0) return prev
             const lastIndex = prev.length - 1
 
+
+            console.log(prev[lastIndex])
             return [
                 ...prev.slice(0, lastIndex),
                 {

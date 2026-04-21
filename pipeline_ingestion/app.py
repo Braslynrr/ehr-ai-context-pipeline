@@ -10,9 +10,6 @@ from ehr_ai_core.retrieval.postgress_vector_db import Postgress_db
 from ehr_ai_core.ollama.ensure_ollama import ensure_Ollama
 from services.ehr_service import RagService
 
-INPUT_DIR = os.getenv("MEDICAL_EHR_LOCATION", "/app/input")
-EMBBEDER_MODEL = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
-
 def load_json_files(input_dir: str) -> List[Dict[str, Any]]:
     documents = []
     for path in Path(input_dir).glob("*.json"):
@@ -26,9 +23,13 @@ if __name__ == "__main__":
     try:
         load_dotenv()
         ensure_Ollama()
+        
+        INPUT_DIR = os.getenv("MEDICAL_EHR_LOCATION", "/app/input")
+        EMBBEDER_MODEL = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
 
         print("Ingestion Process Started!")
         
+        print("Dir:", INPUT_DIR)
         files = load_json_files(INPUT_DIR)
 
         db = Postgress_db()

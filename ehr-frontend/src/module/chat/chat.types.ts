@@ -16,6 +16,7 @@ export type ChatMessage = {
     thinking: boolean
     patient?: Patient
     error?: string
+    thinkingContext?:string
 }
 
 export type ChatHistoryMessageProps = {

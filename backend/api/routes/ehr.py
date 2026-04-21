@@ -1,18 +1,19 @@
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from fastapi.responses import StreamingResponse
 
 from backend.schemas.ehr_schemas import QueryRequest
-from backend.utils.utils import get_medical_service, verify_token
+from backend.utils.utils import get_agent, get_medical_service, verify_token, pending_action
 from ehr_ai_core.error.app_error import AppError
+from services.agent import EHRAgent
 from services.ehr_service import EHRService
 
 router = APIRouter(prefix="/api/ehr", tags=["ehr"])
 
 @router.get("/patients", summary="gets all patients")
 def get_patients(medical_service:EHRService = Depends(get_medical_service) ,payload:dict = Depends(verify_token)):
-    return medical_service.get_Patients()
+    return medical_service.get_patients()
 
 
 @router.post("/ask", summary="schedule action according the given query")
@@ -21,20 +22,22 @@ def resolve_query(data: QueryRequest, medical_service:EHRService = Depends(get_m
     if not data.query:
         raise AppError("Missing query", 400)
     
-    return medical_service.get_stream_id(data.query, data.patientId)
+    return medical_service.create_stream_id(query = data.query, patientId = data.patientId, doctor = payload["doctor"])
 
     
 
 @router.get("/stream/{id}", summary="perform streaming accion")
-def perform_stream_action(id:str, medical_service:EHRService = Depends(get_medical_service), payload:dict = Depends(verify_token)):
+def perform_stream_action(id:str, response:Response, medical_service:EHRService = Depends(get_medical_service), agent:EHRAgent = Depends(get_agent), payload:dict = Depends(verify_token), action_id:str = Depends(pending_action)):
 
     if not id:
         raise AppError("Missing streamId", 400)
 
     def generator():
         try:
-            for chunk in medical_service.stream_answer_clinical_question(id, payload["doctor"]): yield f"data: {json.dumps(chunk)}\n\n"
-
+            data = medical_service.get_stream_id(id)
+            data["pending_action_id"] = action_id
+            intent = agent.classify(data["query"])
+            for chunk in agent.perform_intent(data = data | intent | {"doctor": payload["doctor"]}, response=response): yield f"data: {json.dumps(chunk)}\n\n"
         except AppError as e:
             yield f"event: error\ndata: {e.message}\n\n"
 

@@ -7,10 +7,14 @@ REQUIRED_SECTIONS = ["patient_id", "demographics" ,"medical_history", "recent_vi
 def load_ehr(path:str, enconding:str = "utf-8") -> dict:
     file = open(path, 'r', encoding=enconding)
     jsonfile = json.load(file)
+    return load_json_ehr(jsonfile=jsonfile)
+
+def load_json_ehr(jsonfile:dict):
     _validate_structure(jsonfile)
     _normalize_ehr(jsonfile)
     jsonfile = _normalize_any(jsonfile)
     return jsonfile
+
 
 def _validate_structure(ehr:dict):
     missing_sections = []

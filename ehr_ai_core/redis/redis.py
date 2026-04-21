@@ -18,10 +18,12 @@ class RedisManager:
             decode_responses=True
         )
 
-    def save_data(self, data: dict):
+    def save_data(self, data: dict, prefix:str|None = None):
         try:
             stream_id = str(uuid.uuid4())
-
+            if prefix:
+                stream_id += f"{prefix}:{stream_id}"
+                
             self.__client.setex(
                 stream_id,
                 300,

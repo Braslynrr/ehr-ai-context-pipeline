@@ -5,7 +5,7 @@ import type { ChatHistoryMessageProps } from "../../module/chat/chat.types";
 
 export default function ChatHistoyMessage({ chatMessage }: ChatHistoryMessageProps) {
 
-    const content = chatMessage.text.replace(/\|\s*\|/g, "|\n|")
+    const content = chatMessage.text?.replace(/\|\s*\|/g, "|\n|")
 
     if (!chatMessage.isAIGenerated)
         return <div className="flex flex-col gap-2 bg-gray-600 text-white borde shadow-sm rounded-xl px-12 py-3 w-full max-w-xs self-end">
@@ -15,7 +15,7 @@ export default function ChatHistoyMessage({ chatMessage }: ChatHistoryMessagePro
             </div>
 
 
-            <p className="break-words whitespace-pre-wrap">{chatMessage.text}</p>
+            <p className="text-gray-200 break-words whitespace-pre-wrap">{chatMessage.text}</p>
 
             {chatMessage.error && (
                 <div className="text-red-400 text-sm mt-1">
@@ -27,11 +27,7 @@ export default function ChatHistoyMessage({ chatMessage }: ChatHistoryMessagePro
     return (
         <div className="w-full flex justify-center px-4 py-3">
             <div className="w-full max-w-2xl text-gray-200">
-                {chatMessage.thinking ? (
-                    <span className="animate-pulse">
-                        Thinking...
-                    </span>
-                ) : (
+                
                     <div className="max-w-none">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}
                             components={
@@ -52,7 +48,14 @@ export default function ChatHistoyMessage({ chatMessage }: ChatHistoryMessagePro
                             {content}
                         </ReactMarkdown>
                     </div>
-                )}
+
+                    {chatMessage.thinking && 
+                        <span className="animate-pulse">
+                            Thinking... {chatMessage.thinkingContext && chatMessage.thinkingContext}
+                        </span>
+                    }
+                
+                
             </div>
         </div>
     )
