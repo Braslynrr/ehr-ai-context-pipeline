@@ -13,6 +13,10 @@ class ehr_redis_save(ITool):
         self.description = "save pending action in redis"
 
     def run(self, input):
-        id = self.redis.save_data(input["json_data"], input["doctor"])
+        data = dict(input)
+        
+        data.pop("ehr_json")
+        
+        id = self.redis.save_action(data, input["doctor"])
         input["pending_action_id"] = id
         return {"pending_action_id" : id}

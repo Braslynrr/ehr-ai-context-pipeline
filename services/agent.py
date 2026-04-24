@@ -21,7 +21,7 @@ class EHRAgent:
 
     def __build_prompt(self, data:dict , context: str):
 
-        if data['pending_action_id']:
+        if 'pending_action_id' in data:
             return f"""
                 - Your only task is convert the following into ONE short confirmation request sentence.
                 - Ensure response in {data['language']}
@@ -34,6 +34,13 @@ class EHRAgent:
                 Output:
                 Doctor {data['doctor']}, this action needs your confirmation fist.
                 """
+        elif 'action_done' in data:
+            return f"""
+                Notify changes where successfully done. 
+                - Ensure response in {data['language']}
+                Query: {data['query']}
+                Changes: {context}
+            """
         else: 
              return f"""
                     You are a medical assistant.
@@ -45,7 +52,7 @@ class EHRAgent:
                     
                     Context: {context}
 
-                    Question: {data['query']}
+                    Query: {data['query']}
                    """
             
 
@@ -146,6 +153,7 @@ class EHRAgent:
         Classify the medical query into one intent:
         - get_info → retrieving existing patient data
         - update_info → modifying or adding patient data
+        - execute_action -> afirmative or positive permision query 
         - OOC answer → out of context query
 
         Return ONLY JSON:
@@ -175,7 +183,7 @@ class EHRAgent:
 
 
     def todo_feature_streaming(self, feature_name:str):
-        prompt = f"Tell to the user that {feature_name} can be perform, due to it isn't implemented"
+        prompt = f"Notify that {feature_name} action can be perform, due to it isn't implemented"
         return self.__ollama_stream(prompt=prompt)
     
     def guide_modification(self, query:str):
@@ -244,59 +252,55 @@ class EHRAgent:
 
         yield from self.Streaming_Prediction(data, context)
 
-    def plan_update(self, data:dict, response:Response):
-
+    def define_pending_action(self, data:dict):
         query = data["query"]
+
+        yield { "chunk": "Collecting information", "thinking": True}
+        direction = self.guide_modification(query = query)
+        if direction["action"].lower() in ["update","remove"]:
+            entity = direction["entity"]
+            data["entity"] = entity                
+
+            chunks = self.call_tool("ehr_db_loader").run(data)
+            
+            chunk:dict = [c for c in chunks if c["type"] == entity].pop()
+
+            copied_chunk = dict(chunk)
+
+            yield { "chunk": "Parsing information", "thinking": True}
+            json_data = self.extract_information(query=query, schema=entity, current = join_object(chunk["content"])) 
+            copied_chunk["content"] = json_data
+            data["json_data"] = copied_chunk
+
+            if isinstance(json_data, dict) and "valid" in json_data.keys():
+                missing_fields = join_object(json_data['missing'])
+                yield from self.Streaming_Prediction(data, f"you need to provide the next information to proced:\n {missing_fields}")
+            else: 
+                self.call_tool("ehr_redis_save").run(data)
+
+                if isinstance(chunk["content"], dict):
+                    diff = dict_diff(chunk["content"], copied_chunk["content"])
+                    diff_text = format_changes(diff)
+                    yield from self.Streaming_Prediction(data, diff_text)
+                else: 
+                    to_str_obj = join_object(chunk)
+                    from_str_obj = join_object(copied_chunk)
+                    yield from self.Streaming_Prediction(data, f"from:\n{to_str_obj} to:\n {from_str_obj}")
+        else:
+            yield from self.todo_feature_streaming("Create a new information")
+
+    def plan_update(self, data:dict):
         patientId = data["patientId"]
         if patientId:
-            yield { "chunk": "Collecting information", "thinking": True}
-            direction = self.guide_modification(query = query)
-
-            if direction["action"].lower() in ["update","remove"]:
-                entity = direction["entity"]
-                data["entity"] = entity                
-
-                chunks = self.call_tool("ehr_db_loader").run(data)
-                
-                chunk:dict = [c for c in chunks if c["type"] == entity].pop()
-
-                copied_chunk = dict(chunk)
-
-                yield { "chunk": "Parsing information", "thinking": True}
-                json_data = self.extract_information(query=query, schema=entity, current = join_object(chunk["content"])) 
-                copied_chunk["content"] = json_data
-                data["json_data"] = copied_chunk
-
-                if isinstance(json_data, dict) and "valid" in json_data.keys():
-                   missing_fields = join_object(json_data['missing'])
-                   yield from self.Streaming_Prediction(data, f"you need to provide the next information to proced:\n {missing_fields}")
-                else: 
-                    action_id = self.call_tool("ehr_redis_save").run(data)
-
-                    response.set_cookie(
-                    key="pending_action_id",
-                    value=action_id["pending_action_id"],
-                    httponly=True,
-                    secure=True)
-
-                    if isinstance(chunk["content"], dict):
-                        diff = dict_diff(chunk["content"], copied_chunk["content"])
-                        diff_text = format_changes(diff)
-                        yield from self.Streaming_Prediction(data, diff_text)
-                    else: 
-                        to_str_obj = join_object(chunk)
-                        from_str_obj = join_object(copied_chunk)
-                        yield from self.Streaming_Prediction(data, f"from:\n{to_str_obj} to:\n {from_str_obj}")
-
-
-            else:
-                yield from self.todo_feature_streaming("Create a new information")
-                
+            yield from self.define_pending_action(data)
         else:
             yield from self.todo_feature_streaming("perform general update queries")
         
 
     def  execute_pending_action(self, data:dict):
+            data["pending_action_id"] = f"{data['doctor']}:action"
+
+            data = self.call_tool("ehr_redis_get").run(data)
             
             yield { "chunk": "Collecting action information", "thinking": True}
             
@@ -314,21 +318,24 @@ class EHRAgent:
             data["chunks"] = new_chunks
             
             yield { "chunk": "Trying to apply new updates", "thinking": True}
+
             self.call_tool("ehr_json_ingestion").run(data)
+            
+            data['action_done'] = True
+            
+            yield from self.Streaming_Prediction(data, join_object(chunk))
 
-            yield from self.Streaming_Prediction(data, f"It was succesfully update with:\n ")
-
-    def perform_intent(self, data:dict, response:Response):
+    def perform_intent(self, data:dict):
         try:
             generator = []
             intent:str = data["intent"].lower()
             
             if intent == "get_info":
                 generator = self.information_response(data=data)
-            
             elif intent == "update_info":
-                generator = self.plan_update(data=data, response=response)
-
+                generator = self.plan_update(data=data)
+            elif intent == "execute_action":
+                generator = self.execute_pending_action(data=data)
             elif intent == "occ answer":
                 generator = self.Streaming_Prediction(data, "It's not a medical query")
             else:

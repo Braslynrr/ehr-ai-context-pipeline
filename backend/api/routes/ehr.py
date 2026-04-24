@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
 from backend.schemas.ehr_schemas import QueryRequest
@@ -27,7 +27,7 @@ def resolve_query(data: QueryRequest, medical_service:EHRService = Depends(get_m
     
 
 @router.get("/stream/{id}", summary="perform streaming accion")
-def perform_stream_action(id:str, response:Response, medical_service:EHRService = Depends(get_medical_service), agent:EHRAgent = Depends(get_agent), payload:dict = Depends(verify_token), action_id:str = Depends(pending_action)):
+def perform_stream_action(id:str, medical_service:EHRService = Depends(get_medical_service), agent:EHRAgent = Depends(get_agent), payload:dict = Depends(verify_token)):
 
     if not id:
         raise AppError("Missing streamId", 400)
@@ -35,9 +35,8 @@ def perform_stream_action(id:str, response:Response, medical_service:EHRService 
     def generator():
         try:
             data = medical_service.get_stream_id(id)
-            data["pending_action_id"] = action_id
             intent = agent.classify(data["query"])
-            for chunk in agent.perform_intent(data = data | intent | {"doctor": payload["doctor"]}, response=response): yield f"data: {json.dumps(chunk)}\n\n"
+            for chunk in agent.perform_intent(data = data | intent | {"doctor": payload["doctor"]}): yield f"data: {json.dumps(chunk)}\n\n"
         except AppError as e:
             yield f"event: error\ndata: {e.message}\n\n"
 

@@ -12,6 +12,6 @@ class ehr_redis_get(ITool):
         self.description = "get pending action in redis"
 
     def run(self, input):
-        data = self.redis.get_by_id(input["pending_action"])
-        input = data
+        data = self.redis.get_by_id(input["pending_action_id"])
+        input["json_data"] = data
         return data

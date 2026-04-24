@@ -18,11 +18,10 @@ class RedisManager:
             decode_responses=True
         )
 
-    def save_data(self, data: dict, prefix:str|None = None):
+    def save_action(self, data: dict, prefix:str|None = None):
         try:
-            stream_id = str(uuid.uuid4())
             if prefix:
-                stream_id += f"{prefix}:{stream_id}"
+                stream_id = f"{prefix}:action"
                 
             self.__client.setex(
                 stream_id,
@@ -33,7 +32,23 @@ class RedisManager:
             return stream_id
 
         except exceptions.RedisError as e:
-    
+            raise AppError("Redis save failed", 500)
+
+    def save_data(self, data: dict, prefix:str|None = None):
+        try:
+            stream_id = str(uuid.uuid4())
+            if prefix:
+                stream_id = f"{prefix}:{stream_id}"
+                
+            self.__client.setex(
+                stream_id,
+                300,
+                json.dumps(data)
+            )
+
+            return stream_id
+
+        except exceptions.RedisError as e:
             raise AppError("Redis save failed", 500)
 
     def get_by_id(self, id: str):
