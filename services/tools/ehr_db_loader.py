@@ -21,7 +21,7 @@ class ehr_db_loader(ITool):
             "gender": demograph_info.get('gender', "?"),
             "blood_type": demograph_info.get('blood_type', "?")
             },
-         "source": f"Patient EHR - {input["patientId"]}"
+         "source": f"Patient EHR - {input['patientId']}"
         }
         
         chunks.append(user_demograph)

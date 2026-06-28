@@ -25,9 +25,9 @@ if __name__ == "__main__":
         ensure_Ollama()
         
         INPUT_DIR = os.getenv("MEDICAL_EHR_LOCATION", "/app/input")
-        EMBBEDER_MODEL = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
+        EMBBEDER_MODEL = os.getenv("EMBEDDING_MODEL", "bge-m3")
 
-        print("Ingestion Process Started!")
+        print(f"Ingestion Process Started! Embbeding: {EMBBEDER_MODEL}")
         
         print("Dir:", INPUT_DIR)
         files = load_json_files(INPUT_DIR)
